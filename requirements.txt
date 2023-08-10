@@ -1,0 +1,7 @@
+# for read dicom file
+SimpleITK
+
+matplotlib
+
+# config loader
+hydra

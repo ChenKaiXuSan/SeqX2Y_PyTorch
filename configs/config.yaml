@@ -1,0 +1,6 @@
+# test dataset 
+test:
+  data: '/workspace/SeqX2Y_PyTorch/public_data/LUNA_imaging.npz'
+  mask: '/workspace/SeqX2Y_PyTorch/public_data/LUNA_mask.npz'
+  rpm: '/workspace/SeqX2Y_PyTorch/public_data/rpm_max.csv'
+  ckpt: '/workspace/SeqX2Y_PyTorch/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'

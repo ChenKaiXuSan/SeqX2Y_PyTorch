@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 
-from models.ConvLSTMCell3d import ConvLSTMCell
+from ConvLSTMCell3d import ConvLSTMCell
 from layers import SpatialTransformer
-from models.unet_utils import *
+from unet_utils import *
+
 class EncoderDecoderConvLSTM(nn.Module):
     def __init__(self, nf, in_chan, size1, size2, size3):
         super(EncoderDecoderConvLSTM, self).__init__()
