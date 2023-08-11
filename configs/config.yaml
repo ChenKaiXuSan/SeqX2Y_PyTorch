@@ -1,6 +1,26 @@
-# test dataset 
+# hydra config
+hydra:
+  run:
+    dir: /workspace/SeqX2Y_PyTorch/logs/outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+# test dataset configs
 test:
-  data: '/workspace/SeqX2Y_PyTorch/public_data/LUNA_imaging.npz'
-  mask: '/workspace/SeqX2Y_PyTorch/public_data/LUNA_mask.npz'
-  rpm: '/workspace/SeqX2Y_PyTorch/public_data/rpm_max.csv'
-  ckpt: '/workspace/SeqX2Y_PyTorch/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
+  data: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_imaging.npz'
+  mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
+  rpm: '/workspace/SeqX2Y_PyTorch/test/public_data/rpm_max.csv'
+  ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
+  log_path: '/workspace/SeqX2Y_PyTorch/logs/test_results/'
+
+# train configs
+train:
+  # model hyper-parameters
+  model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
+  img_size: 224
+  version: 'test' # help='the version of logger, such data'
+  model_class_num: 1 # help='the class num of model'
+  model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
+
+# group by defaults
+defaults:
+  - optimizer: adam
+  - data: 4DCT

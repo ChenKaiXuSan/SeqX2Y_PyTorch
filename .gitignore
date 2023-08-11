@@ -1,4 +1,4 @@
 # test ckpt and dataset
 public_data
-# hydra outputs 
-outputs
+# hydra outputs and test outputs
+logs

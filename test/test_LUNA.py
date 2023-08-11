@@ -1,4 +1,5 @@
 import os, logging, csv, warnings, sys
+from omegaconf import DictConfig
 # add path to system.
 sys.path.append('/workspace/SeqX2Y_PyTorch')
 # ignore warnings
@@ -25,7 +26,7 @@ import hydra
 #from scipy.ndimage import zoom
 
 @hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
-def main(config:hydra):
+def main(config: DictConfig):
 
     #Loading image # 
     Data = np.load(config.test['data'])['Data']
@@ -37,7 +38,7 @@ def main(config:hydra):
     test_sx = Seq[:,16:144,16:144,16:144,:]
 
     # check device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cup") 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
 
     Hidden_dim=96
     ConvLSTMmodel = EncoderDecoderConvLSTM(nf=Hidden_dim, in_chan=1, size1=128, size2=128, size3=128)
@@ -55,11 +56,11 @@ def main(config:hydra):
     test_RPM = RPM
 
     # Generate simulation for Each LUNA data #
-    for i in range(0,20):
+    for i in range(0,10):
         patient = i 
         # Randomly choose RPM #
         rpm = int(np.random.randint(0, 20, 1))
-        print("Patient index:", patient,"RPM index:",rpm )
+        logging.info("Patient index: %s, RPM index: %s" % (patient, rpm))
         test_x_ = test_x[patient,...]
         test_x_ = np.expand_dims(test_x_, 0)
         test_x_ = np.expand_dims(test_x_, 0) # 1,1,160,160,160
@@ -84,9 +85,11 @@ def main(config:hydra):
         test_x_rpm_tensor.to(device)
         test_y_rpm_tensor.to(device)
 
-        # FIXME will occur oom error, if future_seq=9        
-        # Prediction #
-        bat_pred, DVF = ConvLSTMmodel(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=1)  # [1,2,3,176,176]
+        # Prediction, set to eval.
+        ConvLSTMmodel.eval()
+        with torch.no_grad():
+            bat_pred, DVF = ConvLSTMmodel(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=9)  # [1,2,3,176,176]
+
         #bat_pred = bat_pred.cpu().detach().numpy()
         #DVF = DVF.cpu().detach().numpy()
         #bat_pred = np.squeeze(bat_pred)
@@ -101,12 +104,12 @@ def main(config:hydra):
         S5, S6, S7 = S5.cpu().detach().numpy(), S6.cpu().detach().numpy(), S7.cpu().detach().numpy()
         S8, S9, S10 = S8.cpu().detach().numpy(), S9.cpu().detach().numpy(), S10.cpu().detach().numpy()
 
-        bat_pred = bat_pred.cpu().detach().numpy()
-        DVF = DVF.cpu().detach().numpy()
-        bat_pred = np.squeeze(bat_pred)
-        DVF = np.squeeze(DVF)
+        bat_pred = bat_pred.cpu().detach().numpy() # 1, 1, pred_feat, 128, 128, 128
+        DVF = DVF.cpu().detach().numpy() #1,3,9, 128, 128
+        bat_pred = np.squeeze(bat_pred) # pred_feat, 128, 128, 128
+        DVF = np.squeeze(DVF) # 3, 9, 128, 128, 128
 
-        I1 = np.squeeze(test_x_[:,0, ...])
+        I1 = np.squeeze(test_x_[:,0, ...]) # 128, 128, 128
         #ex = np.squeeze(test_x2_)
 
         D2, D3, D4, D5 = DVF[:,0,...], DVF[:,1,...], DVF[:,2,...], DVF[:,3,...]
@@ -117,7 +120,7 @@ def main(config:hydra):
         pI8, pI9, pI10 = np.squeeze(bat_pred[6,...]), np.squeeze(bat_pred[7,...]), np.squeeze(bat_pred[8,...])
 
         # Save results #
-        savepath = "./Results"
+        savepath = config.test.log_path
 
         if not os.path.exists(savepath + "/" + "%3.3d" % patient):
             os.makedirs(savepath + "/" + "%3.3d" % patient)

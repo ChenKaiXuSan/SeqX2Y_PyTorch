@@ -2,6 +2,11 @@
 SimpleITK
 
 matplotlib
+opencv-python
+
+# framework
+pytorch-lightning
+torchmetrics
 
 # config loader
 hydra

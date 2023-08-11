@@ -41,3 +41,26 @@ If you find our work useful in your research or if you use parts of this code, p
   pages={045009}
 }
 ```
+
+## Folde Tree 
+``` bash
+.
+|-- configs
+|   `-- data
+|-- images
+|-- logs
+|-- project
+|   `-- models
+`-- test
+    |-- bak
+    `-- public_data
+
+```
+## logs
+
+2023-08-11
+- optimize the code 
+  - mkdir ./test to store the test results and file.
+  - try sitk to load the medical from .dicm and .nrrd.
+  - config the hydra, you can use ./configs/config.yaml to confige your parmeters.
+  - add pip commedn to ./requirements.txt
