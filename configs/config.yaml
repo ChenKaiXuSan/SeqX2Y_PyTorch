@@ -1,7 +1,8 @@
 # hydra config
 hydra:
   run:
-    dir: /workspace/SeqX2Y_PyTorch/logs/outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    # dir: /workspace/SeqX2Y_PyTorch/logs/${train.version}/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: /workspace/SeqX2Y_PyTorch/logs/${train.version}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 # test dataset configs
 test:
@@ -15,10 +16,13 @@ test:
 train:
   # model hyper-parameters
   model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
-  img_size: 224
+  batch_size: 1
   version: 'test' # help='the version of logger, such data'
-  model_class_num: 1 # help='the class num of model'
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
+  log_path: '/workspace/SeqX2Y_PyTorch/logs/'
+  max_epochs: 100
+  gpu_num: 0 # [0, 1]
+  seq: 4 # predict sequence for one patient. large num will occur OOM.
 
 # group by defaults
 defaults:

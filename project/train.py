@@ -1,201 +1,175 @@
-'''
-this project were based the pytorch, pytorch lightning and pytorch video library, 
-for rapid development.
-'''
+# %%
+import csv, logging
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+from pytorch_lightning import LightningModule
+from torchmetrics import classification
+
+from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 
 # %%
-import os
-import pytorch_lightning
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning import loggers as pl_loggers
-# callbacks
-from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping
-from pl_bolts.callbacks import PrintTableMetricsCallback, TrainingDataMonitor
-# from utils.utils import get_ckpt_path
+class PredictLightningModule(LightningModule):
 
-from dataloader.data_loader import WalkDataModule
-from models.pytorchvideo_models import WalkVideoClassificationLightningModule
+    def __init__(self, hparams):
+        super().__init__()
 
-from argparse import ArgumentParser
-import hydra
+        # return model type name
+        self.img_size = hparams.data.img_size
+        self.lr = hparams.optimizer.lr
+        self.seq = hparams.train.seq
 
-# %%
+        self.model = EncoderDecoderConvLSTM(
+            nf=96, in_chan=1, size1=128, size2=128, size3=128)
 
+        # TODO you should generate rpm.csv file by yourself.
+        # load RPM
+        with open(hparams.test['rpm'], 'r') as f:
+            self.data = list(csv.reader(f, delimiter=","))
 
-def get_parameters():
-    '''
-    The parameters for the model training, can be called out via the --h menu
-    '''
-    parser = ArgumentParser()
+        # save the hyperparameters to the file and ckpt
+        self.save_hyperparameters()
 
-    # model hyper-parameters
-    parser.add_argument('--model', type=str, default='resnet', choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
-    parser.add_argument('--img_size', type=int, default=224)
-    parser.add_argument('--version', type=str, default='test', help='the version of logger, such data')
-    parser.add_argument('--model_class_num', type=int, default=1, help='the class num of model')
-    parser.add_argument('--model_depth', type=int, default=50, choices=[50, 101, 152], help='the depth of used model')
+        # select the metrics
+        self._accuracy = classification.MulticlassAccuracy(num_classes=4)
+        self._precision = classification.MulticlassPrecision(num_classes=4)
+        self._confusion_matrix = classification.MulticlassConfusionMatrix(num_classes=4)
 
-    # Training setting
-    parser.add_argument('--max_epochs', type=int, default=50, help='numer of epochs of training')
-    parser.add_argument('--batch_size', type=int, default=8, help='batch size for the dataloader')
-    parser.add_argument('--num_workers', type=int, default=8, help='dataloader for load video')
-    parser.add_argument('--clip_duration', type=int, default=1, help='clip duration for the video')
-    parser.add_argument('--uniform_temporal_subsample_num', type=int,
-                        default=8, help='num frame from the clip duration')
-    parser.add_argument('--gpu_num', type=int, default=0, choices=[0, 1], help='the gpu number whicht to train')
+    def forward(self, x):
+        return self.model(x)
 
-    # ablation experment 
-    # different fusion method 
-    parser.add_argument('--fusion_method', type=str, default='slow_fusion', choices=['single_frame', 'early_fusion', 'late_fusion', 'slow_fusion'], help="select the different fusion method from ['single_frame', 'early_fusion', 'late_fusion']")
-    # pre process flag
-    parser.add_argument('--pre_process_flag', action='store_true', help='if use the pre process video, which detection.')
-    # Transfor_learning
-    parser.add_argument('--transfor_learning', action='store_true', help='if use the transformer learning')
-    parser.add_argument('--fix_layer', type=str, default='all', choices=['all', 'head', 'stem_head', 'stage_head'], help="select the ablation study within the choices ['all', 'head', 'stem_head', 'stage_head'].")
+    def training_step(self, batch: torch.Tensor, batch_idx:int):
+        '''
+        train steop when trainer.fit called
 
-    # TTUR
-    parser.add_argument('--lr', type=float, default=0.0001, help='learning rate for optimizer')
-    parser.add_argument('--beta1', type=float, default=0.5)
-    parser.add_argument('--beta2', type=float, default=0.999)
+        Args:
+            batch (torch.Tensor): b, f, h, w
+            batch_idx (int):batch index.
 
-    # Path
-    parser.add_argument('--data_path', type=str, default="/workspace/data/dataset/", help='meta dataset path')
-    parser.add_argument('--split_data_path', type=str,
-                        default="/workspace/data/splt_dataset_512", help="split dataset path")
-    parser.add_argument('--split_pad_data_path', type=str, default="/workspace/data/split_pad_dataset_512/",
-                        help="split and pad dataset with detection method.")
-    parser.add_argument('--seg_data_path', type=str, default="/workspace/data/segmentation_dataset_512",
-                        help="segmentation dataset with mediapipe, with 5 fold cross validation.")
+        Returns: None
+        '''
+        b, f, h, w = batch.size()
 
-    parser.add_argument('--log_path', type=str, default='./logs', help='the lightning logs saved path')
+        rpm = int(np.random.randint(0, 20, 1))
+        logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
 
-    # using pretrained
-    parser.add_argument('--pretrained_model', type=bool, default=False,
-                        help='if use the pretrained model for training.')
+        RPM = np.array(self.data)
+        RPM = np.float32(RPM)
+        test_RPM = RPM
 
-    # add the parser to ther Trainer
-    # parser = Trainer.add_argparse_args(parser)
+        # load rpm
+        test_rpm_ = test_RPM[rpm,:]
+        test_x_rpm = test_RPM[rpm,:1]
+        test_x_rpm = np.expand_dims(test_x_rpm,0)
+        test_y_rpm = test_RPM[rpm,0:]
+        test_y_rpm = np.expand_dims(test_y_rpm,0)
 
-    return parser.parse_known_args()
+        # invol = torch.Tensor(test_x_)
+        # invol = invol.permute(0, 1, 5, 2, 3, 4)
+        # invol = invol.to(device)
+        invol = batch.unsqueeze(dim=0).unsqueeze(dim=0)
 
-# %%
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
-def train(hparams):
+        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
+        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
+        test_x_rpm_tensor.cuda()
+        test_y_rpm_tensor.cuda()
 
-    # set seed
-    seed_everything(42, workers=True)
+        # pred the video frames
+        # invol: 1, 1, 1, 128, 128, 128
+        # rpm_x: 1, 1
+        # rpm_y: 1, 9
+        bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
 
-    classification_module = WalkVideoClassificationLightningModule(hparams)
+        # calc loss 
+        phase_mse_loss_list = []
+        phase_smooth_l1_loss_list = []
 
-    # instance the data module
-    data_module = WalkDataModule(hparams)
+        for phase in range(self.seq):
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch.expand_as(bat_pred[:,:,phase,...])))
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch.expand_as(DVF[:,:,phase,...])))
+        
+        train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+        self.log('train_loss', train_loss)
+        logging.info('train_loss: %d' % train_loss)
 
-    # for the tensorboard
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir=os.path.join(hparams.log_path, hparams.model), name=hparams.log_version, version=hparams.fold)
+    def validation_step(self, batch: torch.Tensor, batch_idx: int):
+        '''
+        val step when trainer.fit called.
 
-    # some callbacks
-    progress_bar = TQDMProgressBar(refresh_rate=100)
-    rich_model_summary = RichModelSummary(max_depth=2)
-    rich_progress_bar = RichProgressBar(refresh_rate=hparams.batch_size)
+        Args:
+            batch (torch.Tensor): b, f, h, w
+            batch_idx (int): batch index, or patient index
 
-    # define the checkpoint becavier.
-    model_check_point = ModelCheckpoint(
-        filename='{epoch}-{val_loss:.2f}-{val_acc:.4f}',
-        auto_insert_metric_name=True,
-        monitor="val_acc",
-        mode="max",
-        save_last=True,
-        save_top_k=3,
+        Returns: None
+        '''
+        b, f, h, w = batch.size()
 
-    )
+        rpm = int(np.random.randint(0, 20, 1))
+        logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
 
-    # define the early stop.
-    early_stopping = EarlyStopping(
-        monitor='val_acc',
-        patience=5,
-        mode='max',
-    )
+        RPM = np.array(self.data)
+        RPM = np.float32(RPM)
+        test_RPM = RPM
 
-    # bolts callbacks
-    table_metrics_callback = PrintTableMetricsCallback()
-    monitor = TrainingDataMonitor(log_every_n_steps=50)
+        # load rpm
+        test_rpm_ = test_RPM[rpm,:]
+        test_x_rpm = test_RPM[rpm,:1]
+        test_x_rpm = np.expand_dims(test_x_rpm,0)
+        test_y_rpm = test_RPM[rpm,0:]
+        test_y_rpm = np.expand_dims(test_y_rpm,0)
 
-    trainer = Trainer(
-                      devices=[hparams.gpu_num,],
-                      accelerator="gpu",
-                      max_epochs=hparams.max_epochs,
-                      logger=tb_logger,
-                      #   log_every_n_steps=100,
-                      check_val_every_n_epoch=1,
-                      callbacks=[progress_bar, rich_model_summary, table_metrics_callback, monitor, model_check_point, early_stopping],
-                      #   deterministic=True
-                      )
+        # invol = torch.Tensor(test_x_)
+        # invol = invol.permute(0, 1, 5, 2, 3, 4)
+        # invol = invol.to(device)
+        invol = batch.unsqueeze(dim=0).unsqueeze(dim=0)
 
-    # from the params
-    # trainer = Trainer.from_argparse_args(hparams)
+        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
+        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
+        test_x_rpm_tensor.cuda()
+        test_y_rpm_tensor.cuda()
 
-    if hparams.pretrained_model:
-        trainer.fit(classification_module, data_module, ckpt_path=get_ckpt_path)
-    else:
-        # training and val
-        trainer.fit(classification_module, data_module)
+        # pred the video frames
+        with torch.no_grad():
+            # invol: 1, 1, 1, 128, 128, 128
+            # rpm_x: 1, 1
+            # rpm_y: 1, 9
+            bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
 
-    # trainer.logged_metrics
-    # trainer.callback_metrics
+        # calc loss 
+        phase_mse_loss_list = []
+        phase_smooth_l1_loss_list = []
 
-    Acc_list = trainer.validate(classification_module, data_module, ckpt_path='best')
+        for phase in range(self.seq):
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch.expand_as(bat_pred[:,:,phase,...])))
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch.expand_as(DVF[:,:,phase,...])))
+        
+        val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
-    # return the best acc score.
-    return model_check_point.best_model_score.item()
- 
-# %%
-if __name__ == '__main__':
+        self.log('val_loss', val_loss)
+        logging.info('val_loss: %d' % val_loss)
 
-    # for test in jupyter
-    config, unkonwn = get_parameters()
+    def configure_optimizers(self):
+        '''
+        configure the optimizer and lr scheduler
 
-    #############
-    # K Fold CV
-    #############
+        Returns:
+            optimizer: the used optimizer.
+            lr_scheduler: the selected lr scheduler.
+        '''
 
-    if config.pre_process_flag:
-        DATA_PATH = config.split_pad_data_path
-        # DATA_PATH = config.seg_data_path
-    else:
-        DATA_PATH = config.data_path
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
 
-    # get the fold number
-    fold_num = os.listdir(DATA_PATH)
-    fold_num.sort()
-    
-    if 'raw' in fold_num:
-        fold_num.remove('raw')
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer),
+                "monitor": "val_loss",
+            },
+        }
+        # return torch.optim.SGD(self.parameters(), lr=self.lr)
 
-    store_Acc_Dict = {}
-    sum_list = []
-
-    for fold in fold_num:
-        #################
-        # start k Fold CV
-        #################
-
-        print('#' * 50)
-        print('Strat %s' % fold)
-        print('#' * 50)
-
-        config.train_path = os.path.join(DATA_PATH, fold)
-        config.fold = fold
-
-        # connect the version + model + depth, for tensorboard logger.
-        config.log_version = config.version + '_' + config.model + '_depth' + str(config.model_depth)
-
-        Acc_score = train(config)
-
-        store_Acc_Dict[fold] = Acc_score
-        sum_list.append(Acc_score)
-
-    print('#' * 50)
-    print('different fold Acc:')
-    print(store_Acc_Dict)
-    print('Final avg Acc is: %s' % (sum(sum_list) / len(sum_list)))
-    
+    def _get_name(self):
+        return self.model_type

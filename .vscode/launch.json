@@ -11,6 +11,22 @@
             "program": "/workspace/SeqX2Y_PyTorch/test/test_LUNA.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: 当前文件",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

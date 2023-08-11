@@ -87,6 +87,9 @@ def main(config: DictConfig):
 
         # Prediction, set to eval.
         ConvLSTMmodel.eval()
+        # invol: 1, 1, 1, 128, 128, 128
+        # rpm_x: 1, 1
+        # rpm_y: 1, 9
         with torch.no_grad():
             bat_pred, DVF = ConvLSTMmodel(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=9)  # [1,2,3,176,176]
 

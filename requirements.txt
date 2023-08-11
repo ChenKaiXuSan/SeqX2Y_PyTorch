@@ -6,6 +6,7 @@ opencv-python
 
 # framework
 pytorch-lightning
+lightning-bolts
 torchmetrics
 
 # config loader

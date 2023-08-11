@@ -64,3 +64,4 @@ If you find our work useful in your research or if you use parts of this code, p
   - try sitk to load the medical from .dicm and .nrrd.
   - config the hydra, you can use ./configs/config.yaml to confige your parmeters.
   - add pip commedn to ./requirements.txt
+  - complete loss function (smoothl1loss+MSEloss)

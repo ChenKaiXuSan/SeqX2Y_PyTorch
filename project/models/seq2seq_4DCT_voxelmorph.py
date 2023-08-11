@@ -120,6 +120,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         b, seq_len, _,d, h, w = x.size()
 
         # initialize hidden states
+        # shape: 1, 96, 70, 112, 112
         h_t4, c_t4 = self.ConvLSTM3d1.init_hidden(batch_size=b, image_size=(int(d // 2),int(h // 2),int(w // 2)))
         h_t5, c_t5 = self.ConvLSTM3d2.init_hidden(batch_size=b, image_size=(int(d // 2), int(h // 2), int(w // 2)))
         h_t6, c_t6 = self.ConvLSTM3d3.init_hidden(batch_size=b, image_size=(int(d // 2), int(h // 2), int(w // 2)))
