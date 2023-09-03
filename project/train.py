@@ -1,3 +1,24 @@
+'''
+File: train.py
+Project: project
+Created Date: 2023-08-11 08:48:00
+Author: chenkaixu
+-----
+Comment:
+The train and val process for main file.
+This file under the pytorch lightning and inherit the lightningmodule.
+ 
+Have a good code time!
+-----
+Last Modified: 2023-08-20 05:14:56
+Modified By: chenkaixu
+-----
+HISTORY:
+Date 	By 	Comments
+------------------------------------------------
+
+'''
+
 # %%
 import csv, logging
 
@@ -169,7 +190,6 @@ class PredictLightningModule(LightningModule):
                 "monitor": "val_loss",
             },
         }
-        # return torch.optim.SGD(self.parameters(), lr=self.lr)
 
     def _get_name(self):
-        return self.model_type
+        return self.model

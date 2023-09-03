@@ -1,7 +1,25 @@
 '''
-this project were based the pytorch, pytorch lightning and pytorch video library, 
+File: main.py
+Project: project
+Created Date: 2023-08-11 03:46:36
+Author: chenkaixu
+-----
+Comment:
+This project were based the pytorch, pytorch lightning and pytorch video library, 
 for rapid development.
+The project to predict Lung figure motion trajectory.
+ 
+Have a good code time!
+-----
+Last Modified: 2023-08-15 04:38:48
+Modified By: chenkaixu
+-----
+HISTORY:
+Date 	By 	Comments
+------------------------------------------------
+
 '''
+
 
 # %%
 import os
@@ -23,8 +41,6 @@ import hydra
 from omegaconf import DictConfig
 
 # %%
-
-
 @hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
 def train(hparams: DictConfig):
 

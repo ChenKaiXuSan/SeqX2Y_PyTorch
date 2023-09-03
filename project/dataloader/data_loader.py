@@ -1,5 +1,25 @@
-import os
-import sys
+'''
+File: data_loader.py
+Project: dataloader
+Created Date: 2023-08-11 03:43:16
+Author: chenkaixu
+-----
+Comment:
+The CTDataset class to prepare the dataset for train and val.
+Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
+
+Have a good code time!
+-----
+Last Modified: 2023-08-21 02:58:18
+Modified By: chenkaixu
+-----
+HISTORY:
+Date 	By 	Comments
+------------------------------------------------
+
+'''
+
+import os, sys
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -56,7 +76,7 @@ class CTDataset(Dataset):
             if self.transform:
                 image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
             patient_list.append(image_array)
-            # FIXME this is that need 128 for one patient, for sptail transformer
+            # FIXME this is that need 128 for one patient, for sptail transformer, in paper.
             if len(patient_list) == 128:
                 break;
 
@@ -64,13 +84,17 @@ class CTDataset(Dataset):
 
 
 class CTDataModule(LightningDataModule):
+    """
+    CTDataModule, used for prepare the train/val/test dataloader.
+    inherit from the LightningDataMoudle, 
+    """    
+
     def __init__(self, train, data):
         super().__init__()
 
         self._TRAIN_PATH = data.data_path
         self._NUM_WORKERS = data.num_workers
         self._IMG_SIZE = data.img_size
-
         self._BATCH_SIZE = train.batch_size
 
         self.train_transform = Compose(
@@ -105,7 +129,7 @@ class CTDataModule(LightningDataModule):
         if stage in ("fit", None):
             self.train_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
-                transform=self.train_transform
+                transform=self.train_transform,
             )
 
         if stage in ("fit", "validate", None):
@@ -137,15 +161,16 @@ class CTDataModule(LightningDataModule):
 
     def val_dataloader(self) -> DataLoader:
         '''
-        create the Walk train partition from the list of video labels
-        in directory and subdirectory. Add transform that subsamples and
-        normalizes the video before applying the scale, crop and flip augmentations.
+        create the val dataloader from the list of val dataset.
+
+        sert parameters for DataLoader prepare.        
         '''
 
         return DataLoader(
             self.val_dataset,
             batch_size=self._BATCH_SIZE,
             num_workers=self._NUM_WORKERS,
+            shuffle=False,
             pin_memory=True,
             drop_last=False
         )
@@ -160,6 +185,7 @@ class CTDataModule(LightningDataModule):
             self.val_dataset,
             batch_size=self._BATCH_SIZE,
             num_workers=self._NUM_WORKERS,
+            shuffle=False,
             pin_memory=True,
             drop_last=True,
         )

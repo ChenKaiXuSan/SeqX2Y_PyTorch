@@ -116,6 +116,9 @@ class EncoderDecoderConvLSTM(nn.Module):
             5-D Tensor of shape (b, t, c, h, w)        #   batch, time, channel, height, width
         """
 
+        # ? i think the seq_len need to map with the future seq
+        # ? maybe, the seq_len mean that for one patient, in different seq_len break time (continuous)
+        
         # find size of different input dimensions
         b, seq_len, _,d, h, w = x.size()
 
