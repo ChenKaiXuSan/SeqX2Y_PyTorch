@@ -66,5 +66,6 @@ docker run -itd -v $(pwd)/{your_fold_path}:/workspace --gpus all --name {your_co
 
 the next step is same as upper.
 
-**Note**: also we support you to use the dockerfile to build the image and instance the container, but there will occur some problems when you use the dockerfile to build the images, the reason is that you should login to docker hub, first.
+> [!warning]
+> Although we support you to use the dockerfile to build the image and instance the container, but there will occur some problems when you use the dockerfile to build the images, the reason is that you should login to docker hub, first.
 so we recommend you to pull the official image from docker hub (pytorch/pytorch:latest), and isntance the container from the pulled image.
