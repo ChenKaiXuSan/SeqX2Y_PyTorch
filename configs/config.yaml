@@ -15,10 +15,10 @@ test:
 # train configs
 train:
   # model hyper-parameters
-  model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
-  batch_size: 1
+  # model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
+  batch_size: 1 # same as paper 
   version: 'test' # help='the version of logger, such data'
-  model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
+  # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
   log_path: '/workspace/SeqX2Y_PyTorch/logs/' # log save path
   max_epochs: 100
   gpu_num: 0 # [0, 1]

@@ -69,6 +69,8 @@ class EncoderDecoderConvLSTM(nn.Module):
                                    cur_state=[h_t4,c_t4])
             h_t5, c_t5 = self.ConvLSTM3d2(input_tensor = h_t4,
                                    cur_state = [h_t5,c_t5])
+
+            # ! here, multiply the rpm and feature
             h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
             # simple multiplication between rpm and feature
             encoder_vector = h_t5
@@ -120,7 +122,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         # ? maybe, the seq_len mean that for one patient, in different seq_len break time (continuous)
         
         # find size of different input dimensions
-        b, seq_len, _,d, h, w = x.size()
+        b, seq_len, _, d, h, w = x.size()
 
         # initialize hidden states
         # shape: 1, 96, 70, 112, 112
@@ -130,7 +132,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         h_t7, c_t7 = self.ConvLSTM3d4.init_hidden(batch_size=b, image_size=(int(d // 2), int(h // 2), int(w // 2)))
 
         # autoencoder forward
-        #outputs = self.autoencoder(x, seq_len, future_seq, h_t1, c_t1, h_t2, c_t2, h_t3, c_t3, m_t3, h_t4, c_t4, m_t4,
+        # outputs = self.autoencoder(x, seq_len, future_seq, h_t1, c_t1, h_t2, c_t2, h_t3, c_t3, m_t3, h_t4, c_t4, m_t4,
         #                           h_t5, c_t5, m_t5, h_t6, c_t6, m_t6, h_t7, c_t7, h_t8, c_t8)
         outputs = self.autoencoder(x, seq_len, rpm_x, rpm_y, future_seq, h_t4, c_t4, h_t5, c_t5, h_t6, c_t6, h_t7, c_t7)
 

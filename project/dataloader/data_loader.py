@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: 2023-08-21 02:58:18
+Last Modified: 2023-09-25 23:05:09
 Modified By: chenkaixu
 -----
 HISTORY:
@@ -66,21 +66,38 @@ class CTDataset(Dataset):
         return len(self.patient_Dict)
 
     def __getitem__(self, idx):
-        one_patient_full_path = self.patient_Dict[idx]
+        """
+        __getitem__, get the patient data from the patient_Dict.
+        Here we need load all of the patient data, and return a 4D tensor.
+        Shape like, b, c, seq, vol, h, w
 
-        patient_list = []
+        Args:
+            idx (_type_): not use here.
 
-        for path in one_patient_full_path:
-            image = sitk.ReadImage(path)
-            image_array = sitk.GetArrayFromImage(image)
-            if self.transform:
-                image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
-            patient_list.append(image_array)
-            # FIXME this is that need 128 for one patient, for sptail transformer, in paper.
-            if len(patient_list) == 128:
-                break;
+        Returns:
+            torch.Tensor: the patient data, shape like, b, c, seq, vol, h, w
+        """        
 
-        return torch.stack(patient_list, dim=0).squeeze()
+        # one_patient_full_path = self.patient_Dict[idx]
+        one_patient_full_vol = []
+
+        for k, v in self.patient_Dict.items():
+                
+            patient_list = []
+
+            for path in v:
+                image = sitk.ReadImage(path)
+                image_array = sitk.GetArrayFromImage(image)
+                if self.transform:
+                    image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
+                patient_list.append(image_array)
+                # FIXME this is that need 128 for one patient, for sptail transformer, in paper.
+                if len(patient_list) == 128:
+                    break;
+            
+            one_patient_full_vol.append(torch.stack(patient_list, dim=0).squeeze()) # shape like, seq, vol, h, w
+
+        return torch.stack(one_patient_full_vol, dim=0).squeeze() # shape like, seq, vol, h, w
 
 
 class CTDataModule(LightningDataModule):
