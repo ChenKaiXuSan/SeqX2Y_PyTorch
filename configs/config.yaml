@@ -20,9 +20,9 @@ train:
   version: 'test' # help='the version of logger, such data'
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
   log_path: '/workspace/SeqX2Y_PyTorch/logs/' # log save path
-  max_epochs: 100
+  max_epochs: 1
   gpu_num: 0 # [0, 1]
-  seq: 4 # predict sequence for one patient. large num will occur OOM.
+  seq: 3 # predict sequence for one patient. large num will occur OOM.
 
 # group by defaults
 defaults:

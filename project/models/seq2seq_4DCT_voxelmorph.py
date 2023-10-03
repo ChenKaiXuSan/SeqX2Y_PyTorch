@@ -60,7 +60,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         e2 = []
         e3 = []
 
-        for t in range(seq_len):
+        for t in range(0, seq_len, -1):
             #print(rpm_x.shape, rpm_y.shape)
             h_t1 = self.encoder1_conv(x[:,t,...])
             down1 = self.down1(h_t1)

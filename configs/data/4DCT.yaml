@@ -1,4 +1,4 @@
 # 4DCT
-data_path: "/workspace/data/4DCT-Dicom/" # help='meta dataset path'
+data_path: "C:\E\CHEN\Data\POPI\4DCT-Dicom" # help='meta dataset path' /workspace/data/4DCT-Dicom/
 num_workers: 8
 img_size: 128 # 224
