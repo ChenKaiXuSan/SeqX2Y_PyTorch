@@ -92,10 +92,8 @@ class PredictLightningModule(LightningModule):
 
         # TODO you should fix this, mapping with your data.
         # ! fake data 
-        # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
-        # test_y_rpm = np.random.rand(1, 10)[0,1:] 
-        test_x_rpm = np.random.rand(1, 4)
-        test_y_rpm = np.random.rand(1, 4)
+        test_x_rpm = np.random.rand(1, 10) # patient index, seq
+        test_y_rpm = np.random.rand(1, 10) 
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -155,10 +153,8 @@ class PredictLightningModule(LightningModule):
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
 
         # ! fake data
-        # test_x_rpm = np.random.rand(1, 10)[0, :9]# patient index, seq
-        # test_y_rpm = np.random.rand(1, 10)[0, 1:]
-        test_x_rpm = np.random.rand(1, 4)
-        test_y_rpm = np.random.rand(1, 4)
+        test_x_rpm = np.random.rand(1, 10) # patient index, seq
+        test_y_rpm = np.random.rand(1, 10)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
