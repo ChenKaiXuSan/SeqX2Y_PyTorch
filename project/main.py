@@ -41,7 +41,7 @@ import hydra
 from omegaconf import DictConfig
 
 # %%
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+@hydra.main(version_base=None, config_path="C:\\E\\CHEN\\SeqX2Y_PyTorch\\configs", config_name="config.yaml")
 def train(hparams: DictConfig):
 
     # set seed

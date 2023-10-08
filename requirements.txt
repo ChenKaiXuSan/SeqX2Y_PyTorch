@@ -10,4 +10,4 @@ lightning-bolts
 torchmetrics
 
 # config loader
-hydra
+hydra-core

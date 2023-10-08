@@ -1,7 +1,7 @@
 import os, logging, csv, warnings, sys
 from omegaconf import DictConfig
 # add path to system.
-sys.path.append('/workspace/SeqX2Y_PyTorch')
+# sys.path.append('/workspace/SeqX2Y_PyTorch')
 # ignore warnings
 warnings.filterwarnings('ignore')
 
@@ -25,7 +25,7 @@ import hydra
 
 #from scipy.ndimage import zoom
 
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+@hydra.main(version_base=None, config_path="C:\\E\\CHEN\\SeqX2Y_PyTorch\\configs", config_name="config.yaml")
 def main(config: DictConfig):
 
     #Loading image # 

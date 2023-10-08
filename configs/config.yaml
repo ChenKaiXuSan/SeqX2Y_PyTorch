@@ -2,15 +2,15 @@
 hydra:
   run:
     # dir: /workspace/SeqX2Y_PyTorch/logs/${train.version}/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-    dir: /workspace/SeqX2Y_PyTorch/logs/${train.version}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: C:\\E\\CHEN\\SeqX2Y_PyTorch\\logs\\${train.version}\\${now:%Y-%m-%d}\\${now:%H-%M-%S}
 
 # test dataset configs
 test:
-  data: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_imaging.npz'
-  mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
-  rpm: '/workspace/SeqX2Y_PyTorch/test/public_data/rpm_max.csv'
-  ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
-  log_path: '/workspace/SeqX2Y_PyTorch/logs/test_results/'
+  data: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\public_data\\LUNA_imaging.npz'
+  mask: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\public_data\\LUNA_mask.npz'
+  rpm: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\public_data\\rpm_max.csv'
+  ckpt: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\public_data\\New_4DCT_epoch00141_train_loss0.0006_.model'
+  log_path: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\test_results\\'
 
 # train configs
 train:
@@ -19,10 +19,10 @@ train:
   batch_size: 1 # same as paper 
   version: 'test' # help='the version of logger, such data'
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
-  log_path: '/workspace/SeqX2Y_PyTorch/logs/' # log save path
-  max_epochs: 100
+  log_path: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\logs\\' # log save path
+  max_epochs: 1
   gpu_num: 0 # [0, 1]
-  seq: 4 # predict sequence for one patient. large num will occur OOM.
+  seq: 3 # predict sequence for one patient. large num will occur OOM.
 
 # group by defaults
 defaults:

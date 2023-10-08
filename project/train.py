@@ -27,6 +27,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pytorch_lightning import LightningModule
 from torchmetrics import classification
@@ -91,8 +92,10 @@ class PredictLightningModule(LightningModule):
 
         # TODO you should fix this, mapping with your data.
         # ! fake data 
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10) 
+        # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
+        # test_y_rpm = np.random.rand(1, 10)[0,1:] 
+        test_x_rpm = np.random.rand(1, 4)
+        test_y_rpm = np.random.rand(1, 4)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -152,8 +155,10 @@ class PredictLightningModule(LightningModule):
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
 
         # ! fake data
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10)
+        # test_x_rpm = np.random.rand(1, 10)[0, :9]# patient index, seq
+        # test_y_rpm = np.random.rand(1, 10)[0, 1:]
+        test_x_rpm = np.random.rand(1, 4)
+        test_y_rpm = np.random.rand(1, 4)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -174,6 +179,16 @@ class PredictLightningModule(LightningModule):
             # rpm_x: 1, 1
             # rpm_y: 1, 9
             bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
+        
+        # save DVF img
+        dvf=DVF[0,:,0,0,...]
+        dvf=dvf.permute(1,2,0)
+        dvf=dvf.cpu().detach().numpy()
+        plt.imshow(dvf)
+        plt.show()
+        # plt.colorbar()  # 显示颜色条
+        # plt.title("DVF Image")
+        # plt.show()
             
         # calc loss 
         phase_mse_loss_list = []

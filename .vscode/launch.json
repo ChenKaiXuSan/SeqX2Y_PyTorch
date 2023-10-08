@@ -8,7 +8,7 @@
             "name": "test_LUNA",
             "type": "python",
             "request": "launch",
-            "program": "/workspace/SeqX2Y_PyTorch/test/test_LUNA.py",
+            "program": "C:\\E\\CHEN\\SeqX2Y_PyTorch\\test\\test_LUNA.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
@@ -24,7 +24,7 @@
             "name": "train",
             "type": "python",
             "request": "launch",
-            "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
+            "program": "C:\\E\\CHEN\\SeqX2Y_PyTorch\\project\\main.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
