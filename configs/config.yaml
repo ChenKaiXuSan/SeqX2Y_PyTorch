@@ -21,8 +21,6 @@ train:
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
   log_path: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\logs\\' # log save path
   max_epochs: 1
-  log_path: '/workspace/SeqX2Y_PyTorch/logs/' # log save path
-  max_epochs: 1
   gpu_num: 0 # [0, 1]
   seq: 3 # predict sequence for one patient. large num will occur OOM.
 
