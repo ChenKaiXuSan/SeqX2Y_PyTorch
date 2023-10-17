@@ -22,7 +22,7 @@ train:
   log_path: 'C:\\E\\CHEN\\SeqX2Y_PyTorch\\logs\\' # log save path
   max_epochs: 1
   gpu_num: 0 # [0, 1]
-  seq: 3 # predict sequence for one patient. large num will occur OOM.
+  seq: 2 # predict sequence for one patient. large num will occur OOM.
 
 # group by defaults
 defaults:

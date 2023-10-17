@@ -64,7 +64,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         for t in range(seq_len-1, 0, -1):
             # print(rpm_x.shape, rpm_y.shape)
             # OutOfMemoryError
-            h_t1 = self.encoder1_conv(x[:,t,...])
+            h_t1 = self.encoder1_conv(x[:,t,...]) # Out of Memory
             down1 = self.down1(h_t1)
 
             h_t4, c_t4 = self.ConvLSTM3d1(input_tensor=down1,
@@ -76,6 +76,7 @@ class EncoderDecoderConvLSTM(nn.Module):
             h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
             # simple multiplication between rpm and feature
             encoder_vector = h_t5
+            # encoder_vector.shape=(1,96,64,64,64)
 
 
         for t in range(future_step):

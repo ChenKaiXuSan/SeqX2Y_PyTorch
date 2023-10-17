@@ -76,24 +76,30 @@ class PredictLightningModule(LightningModule):
         '''
         b, seq, vol, h, w = batch.size()
 
-        rpm = int(np.random.randint(0, 20, 1))
+        # rpm = int(np.random.randint(0, 20, 1))
+        rpm = batch_idx
         logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
 
         RPM = np.array(self.data)
         RPM = np.float32(RPM)
         test_RPM = RPM
+        # self.data (142,3)  RPM.shape=(142,3)
 
         # load rpm
         # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
+        # test_x_rpm = test_RPM[rpm,:3]
         # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
+        # test_y_rpm = test_RPM[rpm,1:]
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
+        test_x_rpm = [[1.7425, 4.3534,9.1018]]
+        test_y_rpm = [[4.3534,	9.1018,	5.2437]]
 
         # TODO you should fix this, mapping with your data.
         # ! fake data 
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10) 
+        # test_x_rpm = np.random.rand(1, 10)[0, :9]# patient index, seq
+        # test_y_rpm = np.random.rand(1, 10)[0, 1:]
+        # test_x_rpm = np.random.rand(1, 4) # patient index, seq
+        # test_y_rpm = np.random.rand(1, 4)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -137,7 +143,8 @@ class PredictLightningModule(LightningModule):
         '''
         b, seq, vol, h, w = batch.size()
 
-        rpm = int(np.random.randint(0, 20, 1))
+        # rpm = int(np.random.randint(0, 20, 1))
+        rpm = batch_idx
         logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
 
         RPM = np.array(self.data)
@@ -147,19 +154,23 @@ class PredictLightningModule(LightningModule):
         # ! TODO you should fix this, mapping with your data.
         # load rpm
         # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
+        # test_x_rpm = test_RPM[rpm,:3]
         # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
+        # test_y_rpm = test_RPM[rpm,1:]
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
+        test_x_rpm = [[1.7425,4.3534,9.1018]]
+        test_y_rpm = [[4.3534,9.1018,5.2437]]
 
         # ! fake data
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10)
+        # test_x_rpm = np.random.rand(1, 4) # patient index, seq
+        # test_y_rpm = np.random.rand(1, 4)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
         # invol = invol.to(device)
         invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
+        # batch.shape=(1,4,128,128)
+        # invol.shape=(1,4,1,128,128,128)
         
         # ! TODO you should decrease the seq_len, to reduce the memory usage.
         # new_invol = batch[:, :self.seq, ...]
@@ -175,7 +186,7 @@ class PredictLightningModule(LightningModule):
             # rpm_x: 1, 1
             # rpm_y: 1, 9
             bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
-        
+            # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
         # save DVF img
         dvf=DVF[0,:,0,0,...]
         dvf=dvf.permute(1,2,0)
