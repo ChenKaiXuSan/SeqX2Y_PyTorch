@@ -60,7 +60,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         e2 = []
         e3 = []
 
-        for t in range(seq_len):
+        for t in range(0, seq_len, -1):
             #print(rpm_x.shape, rpm_y.shape)
             h_t1 = self.encoder1_conv(x[:,t,...])
             down1 = self.down1(h_t1)
@@ -71,7 +71,7 @@ class EncoderDecoderConvLSTM(nn.Module):
                                    cur_state = [h_t5,c_t5])
 
             # ! here, multiply the rpm and feature
-            h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
+            h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t])) # from back to front
             # simple multiplication between rpm and feature
             encoder_vector = h_t5
 

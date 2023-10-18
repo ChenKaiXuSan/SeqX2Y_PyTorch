@@ -63,7 +63,7 @@ def main(config: DictConfig):
         logging.info("Patient index: %s, RPM index: %s" % (patient, rpm))
         test_x_ = test_x[patient,...]
         test_x_ = np.expand_dims(test_x_, 0)
-        test_x_ = np.expand_dims(test_x_, 0) # 1,1,160,160,160
+        test_x_ = np.expand_dims(test_x_, 0) # 1,1,128,128,128,1
 
         test_sx_ = test_sx[patient, ...]
         test_sx_ = np.expand_dims(test_sx_, 0)

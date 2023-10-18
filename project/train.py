@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: 2023-09-26 00:06:22
+Last Modified: 2023-10-02 08:14:09
 Modified By: chenkaixu
 -----
 HISTORY:
@@ -152,8 +152,8 @@ class PredictLightningModule(LightningModule):
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
 
         # ! fake data
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10)
+        test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
+        test_y_rpm = np.random.rand(1, 10)[0,1:]
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
