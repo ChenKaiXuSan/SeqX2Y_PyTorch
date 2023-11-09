@@ -38,6 +38,32 @@ from pytorch_lightning import LightningDataModule
 
 import SimpleITK as sitk
 
+class CT_normalize(torch.nn.Module):
+    
+    def __init__(self, x1 = 90, y1 = 80, x2 = 410, y2 = 360, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        # the parms for init.
+        # 定义感兴趣区域的坐标范围（左上角和右下角的像素坐标）
+        # x1, y1 = 90, 80  # 左上角坐标
+        # x2, y2 = 410, 360  # 右下角坐标
+
+    def forward(self, image):
+
+        # todo the logic for the normalize .
+        # return normalized img.
+        # dicom_image = sitk.ReadImage(image)
+        # dicom_array = sitk.GetArrayFromImage(image)
+
+        max_value = image.max()
+        min_value = image.min()
+        normalized_img = (image - min_value) / (max_value - min_value)
+        # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
+
+        return normalized_img
 
 class CTDataset(Dataset):
     def __init__(self, data_path, transform=None):
@@ -121,6 +147,8 @@ class CTDataModule(LightningDataModule):
                 # RandomCrop(self._IMG_SIZE),
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 RandomHorizontalFlip(p=0.5),
+                # CT normalize method, for every CT image normalize to 0-1 pixel value.
+                CT_normalize(),
             ]
         )
 
@@ -128,6 +156,7 @@ class CTDataModule(LightningDataModule):
             [
                 # ToTensor(),
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                CT_normalize(),
             ]
         )
 

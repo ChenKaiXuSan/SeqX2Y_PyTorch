@@ -21,17 +21,20 @@ Date 	By 	Comments
 '''
 
 # %%
-import csv, logging
+import os, csv, logging
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import matplotlib.pyplot as plt
+import SimpleITK as sitk
 
 from pytorch_lightning import LightningModule
 from torchmetrics import classification
 
 from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
+from models.Warp import Warp
 
 # %%
 class PredictLightningModule(LightningModule):
@@ -74,6 +77,13 @@ class PredictLightningModule(LightningModule):
         Returns: None
         '''
         b, seq, vol, h, w = batch.size()
+        # save batch img
+        Batch=batch[0,0,0,...]
+        # dvf=dvf.permute(1,2,0)
+        Batch=Batch.cpu().detach().numpy()
+        plt.imshow(Batch)
+        plt.show()
+        plt.savefig('/workspace/SeqX2Y_PyTorch/test/imgresult/Batch.png')
 
         rpm = int(np.random.randint(0, 20, 1))
         logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
@@ -91,8 +101,8 @@ class PredictLightningModule(LightningModule):
 
         # TODO you should fix this, mapping with your data.
         # ! fake data 
-        test_x_rpm = np.random.rand(1, 10) # patient index, seq
-        test_y_rpm = np.random.rand(1, 10) 
+        test_x_rpm = np.random.rand(1, 4) # patient index, seq
+        test_y_rpm = np.random.rand(1, 4) 
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -114,11 +124,35 @@ class PredictLightningModule(LightningModule):
         phase_mse_loss_list = []
         phase_smooth_l1_loss_list = []
 
+        # chen
+        # for phase in range(self.seq):
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+        # self.log('train_loss', train_loss)
+        # logging.info('train_loss: %d' % train_loss)
+
+        # ouyangV1 add spatial transform
+        # Transform = Warp(size1=128, size2=128, size3=128).cuda() # spatial transform 
+        # for phase in range(self.seq):
+        #     T = Transform(bat_pred[:,:,phase,...], batch[:, 0, ...].expand_as(bat_pred[:,:,0,...]))
+        #     phase_mse_loss_list.append(F.mse_loss(T, batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+        # self.log('train_loss', train_loss)
+        # logging.info('train_loss: %d' % train_loss)
+
+        # ouyangV2 add gradient
         for phase in range(self.seq):
             phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
-        
-        train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+            # phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+            input_tensor = batch[:, phase, ...].expand_as(DVF[:,:,phase,...])
+            input_tensor.requires_grad = True
+            gradient_phi_t = torch.autograd.grad(outputs=DVF[:,:,phase,...], inputs=input_tensor, grad_outputs=torch.ones_like(DVF[:,:,phase,...]), create_graph=True)[0]
+            part2_loss = torch.sum(gradient_phi_t.pow(2))
+        train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(part2_loss, dim=0))
+
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
         self.log('train_loss', train_loss)
         logging.info('train_loss: %d' % train_loss)
 
@@ -152,8 +186,10 @@ class PredictLightningModule(LightningModule):
         # test_y_rpm = np.expand_dims(test_y_rpm,0)
 
         # ! fake data
-        test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
-        test_y_rpm = np.random.rand(1, 10)[0,1:]
+        # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
+        # test_y_rpm = np.random.rand(1, 10)[0,1:]
+        test_x_rpm = np.random.rand(1, 4) # patient index, seq
+        test_y_rpm = np.random.rand(1, 4)
 
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
@@ -174,16 +210,81 @@ class PredictLightningModule(LightningModule):
             # rpm_x: 1, 1
             # rpm_y: 1, 9
             bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
-            
+            # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
+        # save DVF img
+        dvf=DVF[0,:,0,0,...]
+        dvf=dvf.permute(1,2,0)
+        dvf=dvf.cpu().detach().numpy()
+        plt.imshow(dvf)
+        plt.show()
+        plt.savefig('/workspace/SeqX2Y_PyTorch/test/imgresult/dvf.png')
+
+        Bat_Pred=bat_pred[0,0,:,0,...]
+        Bat_Pred=Bat_Pred.permute(1,2,0)
+        Bat_Pred=Bat_Pred.cpu().detach().numpy()
+        plt.imshow(Bat_Pred)
+        plt.show()
+        plt.savefig('/workspace/SeqX2Y_PyTorch/test/imgresult/Bat_Pred.png')
+
+        # save predict img
+        BAT_PRED = bat_pred.cpu().detach().numpy() # 1, 1, future_seq, 128, 128, 128
+        BAT_PRED = np.squeeze(BAT_PRED) # pred_feat, 128, 128, 128
+        savepath = '/workspace/SeqX2Y_PyTorch/test/imgresult'
+        writer = sitk.ImageFileWriter()
+        pI2, pI3, pI4 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...])        
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale2_predict.nrrd")
+        writer.Execute(sitk.GetImageFromArray(pI2))
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale3_predict.nrrd")
+        writer.Execute(sitk.GetImageFromArray(pI3))
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale4_predict.nrrd")
+        writer.Execute(sitk.GetImageFromArray(pI4))
+
+        # Permute DVF & Save DVF
+        def dvf_(d):
+            x = d[0,...]
+            x = np.reshape(x, [1,128,128,128])
+            y = d[1,...]
+            y = np.reshape(y, [1,128,128,128])
+            z = d[2,...]
+            z = np.reshape(z, [1,128,128,128])
+            out = np.concatenate([z,y,x],0)
+            return out
+        
+        Dvf = DVF.cpu().detach().numpy() # 1,3,9, 128, 128
+        Dvf = np.squeeze(Dvf) # 3, 9, 128, 128, 128
+        DVF2, DVF3, DVF4 = dvf_(Dvf[:,0,...]), dvf_(Dvf[:,1,...]), dvf_(Dvf[:,2,...])
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF2.nrrd")
+        writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF2), [1,2,3,0]))) # 3 1 2
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF3.nrrd")
+        writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF3), [1,2,3,0]))) # 3 1 2
+        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF4.nrrd")
+        writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF4), [1,2,3,0]))) # 3 1 2
+
         # calc loss 
         phase_mse_loss_list = []
         phase_smooth_l1_loss_list = []
 
+        # for phase in range(self.seq):
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...])))
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+
+        # ouyangV1
+        # Transform = Warp(size1=128, size2=128, size3=128).cuda() # spatial transform
+        # for phase in range(self.seq):
+        #     T = Transform(bat_pred[:,:,phase,...], batch[:, 0, ...].expand_as(bat_pred[:,:,0,...]))
+        #     phase_mse_loss_list.append(F.mse_loss(T, batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+        # val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+       
+        # ||∇ϕt||^2
         for phase in range(self.seq):
-            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...])))
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
-        
-        val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+            # phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+            DDD=DVF[:,:,phase,...]
+            DDD.requires_grad = True
+            gradient_phi_t = torch.autograd.grad(DDD.sum(), DDD, create_graph=True)[0]
+            part2_loss = torch.sum(gradient_phi_t.pow(2))
+        val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(part2_loss, dim=0))
 
         self.log('val_loss', val_loss)
         logging.info('val_loss: %d' % val_loss)

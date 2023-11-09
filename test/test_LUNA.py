@@ -108,19 +108,25 @@ def main(config: DictConfig):
         S8, S9, S10 = S8.cpu().detach().numpy(), S9.cpu().detach().numpy(), S10.cpu().detach().numpy()
 
         bat_pred = bat_pred.cpu().detach().numpy() # 1, 1, pred_feat, 128, 128, 128
+        # bat_pred=(1, 1, 9, 128, 128, 128)
         DVF = DVF.cpu().detach().numpy() #1,3,9, 128, 128
+        # DVF=(1, 3, 9, 128, 128, 128)
         bat_pred = np.squeeze(bat_pred) # pred_feat, 128, 128, 128
+        # bat_pred=(9, 128, 128, 128)
         DVF = np.squeeze(DVF) # 3, 9, 128, 128, 128
+        # DVF=(3, 9, 128, 128, 128)
 
         I1 = np.squeeze(test_x_[:,0, ...]) # 128, 128, 128
         #ex = np.squeeze(test_x2_)
 
         D2, D3, D4, D5 = DVF[:,0,...], DVF[:,1,...], DVF[:,2,...], DVF[:,3,...]
         D6, D7, D8, D9, D10 = DVF[:,4,...], DVF[:,5,...], DVF[:,6,...], DVF[:,7,...],DVF[:,8,...]
+        # D2-D8=(3, 128, 128, 128)
 
         pI2, pI3, pI4 = np.squeeze(bat_pred[0, ...]), np.squeeze(bat_pred[1, ...]), np.squeeze(bat_pred[2, ...])
         pI5, pI6, pI7 = np.squeeze(bat_pred[3, ...]), np.squeeze(bat_pred[4, ...]), np.squeeze(bat_pred[5, ...])
         pI8, pI9, pI10 = np.squeeze(bat_pred[6,...]), np.squeeze(bat_pred[7,...]), np.squeeze(bat_pred[8,...])
+        # pI2-pI10=(128,128,128)
 
         # Save results #
         savepath = config.test.log_path
