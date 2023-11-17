@@ -117,6 +117,6 @@ class ConvOut(nn.Module):
 
     def forward(self, x):
         # print(x.size())
-        output_ = self.convout(x)
+        output_ = self.convout(x) # output_ torch.Size([1, 3, 70, 120, 140]), x torch.Size([1, 96, 70, 120, 140])
         # print(output_.size())
         return output_

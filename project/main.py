@@ -80,7 +80,7 @@ def train(hparams: DictConfig):
 
     # bolts callbacks
     table_metrics_callback = PrintTableMetricsCallback()
-    monitor = TrainingDataMonitor(log_every_n_steps=50)
+    monitor = TrainingDataMonitor(log_every_n_steps=1)
 
     trainer = Trainer(
         devices=[hparams.train.gpu_num,],

@@ -2,3 +2,5 @@
 public_data
 # hydra outputs and test outputs
 logs
+test/imgresult
+test/Imageresult
