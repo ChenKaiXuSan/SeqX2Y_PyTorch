@@ -25,12 +25,12 @@ class SpatialTransformer(nn.Module):
         # is included when saving weights to disk, so the model files are way bigger
         # than they need to be. so far, there does not appear to be an elegant solution.
         # see: https://discuss.pytorch.org/t/how-to-register-buffer-without-polluting-state-dict
-        self.register_buffer('grid', grid)
 
+        self.register_buffer('grid', grid)
     def forward(self, src, flow):
         # new locations
-        new_locs = self.grid + flow
-        shape = flow.shape[2:]
+        new_locs = self.grid + flow # new_locs torch.Size([1, 3, 70, 120, 140])
+        shape = flow.shape[2:] # flow.shape[2:] torch.Size([70, 120, 140])
 
         # need to normalize grid values to [-1, 1] for resampler
         for i in range(len(shape)):

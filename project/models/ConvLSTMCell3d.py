@@ -44,20 +44,20 @@ class ConvLSTMCell(nn.Module):
 
     def forward(self, input_tensor, cur_state):
         h_cur, c_cur = cur_state
+        # h_cur c_cur.shape=>torch.Size([1, 96, 35, 60, 70]) input:(nf=96, in_chan=1, size1=70, size2=120, size3=140)
+        combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis   combined.shape=>torch.Size([1, 192, 35, 60, 70])
 
-        combined = torch.cat([input_tensor, h_cur], dim=1)  # concatenate along channel axis
-
-        combined_conv = self.conv(combined)
+        combined_conv = self.conv(combined) # combined_conv.shape=>torch.Size([1, 384, 35, 60, 70])
         cc_i, cc_f, cc_o, cc_g = torch.split(combined_conv, self.hidden_dim, dim=1)
         i = torch.sigmoid(cc_i)
         f = torch.sigmoid(cc_f)
         o = torch.sigmoid(cc_o)
-        g = torch.tanh(cc_g)
+        g = torch.tanh(cc_g)  # i...g.shape=> torch.Size([1, 96, 35, 60, 70]) half
 
         c_next = f * c_cur + i * g
         h_next = o * torch.tanh(c_next)
 
-        return h_next, c_next
+        return h_next, c_next  # h_next, c_next.shape=>torch.Size([1, 96, 35, 60, 70])
 
     def init_hidden(self, batch_size, image_size):
         depth, height, width = image_size
