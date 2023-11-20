@@ -17,9 +17,9 @@ Modified By: chenkaixu
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
+2023-11-20 Chen change the tensorboard logger save path.
 
 '''
-
 
 # %%
 import os
@@ -54,8 +54,8 @@ def train(hparams: DictConfig):
     data_module = CTDataModule(hparams.train, hparams.data)
 
     # for the tensorboard
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir=os.path.join(
-        hparams.train.log_path), name=hparams.train.version)
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.train.log_path, 
+                                            name= "tensorboard_logs")
 
     # some callbacks
     progress_bar = TQDMProgressBar(refresh_rate=100)

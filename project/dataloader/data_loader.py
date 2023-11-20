@@ -16,10 +16,12 @@ Modified By: chenkaixu
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
-
+2023-11-20 Chen refactor the CTDataset fucntion, now it can load multi-patient data.
+2023-11-20 Chen add the CT_normalize class, for normalize the CT image.
 '''
 
 import os, sys
+from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -40,8 +42,21 @@ from pytorch_lightning import LightningDataModule
 import SimpleITK as sitk
 
 class CT_normalize(torch.nn.Module):
-    
-    def __init__(self, x1 = 90, y1 = 80, x2 = 410, y2 = 360, *args, **kwargs) -> None:
+    """ CT
+
+    Args:
+        torch (_type_): _description_
+    """    
+
+    def __init__(self, img_size = 128, x1 = 90, y1 = 80, x2 = 410, y2 = 360, *args, **kwargs) -> None:
+        """_summary_
+
+        Args:
+            x1 (int, optional): _description_. Defaults to 90.
+            y1 (int, optional): _description_. Defaults to 80.
+            x2 (int, optional): _description_. Defaults to 410.
+            y2 (int, optional): _description_. Defaults to 360.
+        """        
         super().__init__(*args, **kwargs)
         self.x1 = x1
         self.y1 = y1
@@ -52,49 +67,82 @@ class CT_normalize(torch.nn.Module):
         x1, y1 = 90, 80  # 左上角坐标
         x2, y2 = 410, 360  # 右下角坐标
 
+        self.img_size = img_size
+
     def forward(self, image):
+        """_summary_
+
+        Args:
+            image (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """        
 
         # todo the logic for the normalize .
         # return normalized img.
         # dicom_image = sitk.ReadImage(image)
         # dicom_array = sitk.GetArrayFromImage(image)
 
-        # max_value = image.max()
-        # min_value = image.min()
-        # normalized_img = (image - min_value) / (max_value - min_value)
+        max_value = image.max()
+        min_value = image.min()
+        normalized_img = (image - min_value) / (max_value - min_value)
+
         # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
-        cropd_img = image[:, 128-80:128+40, 128-70:128+70]
+
+        half_img_size = self.img_size // 2
+        center_loc = image.shape[1] // 2
+
+        cropd_img = normalized_img[:, center_loc-half_img_size:center_loc+half_img_size, center_loc-half_img_size:center_loc+half_img_size]
+
         # cropd_img = image[:,30:256,100:350]
 
         return cropd_img
         # return normalized_img
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, transform=None):
-        self.data_path = data_path
+    def __init__(self, data_path, transform=None, vol=128):
+        self.data_path = Path(data_path)
         # self.targets = targets
         self.transform = transform
-        self.patient_Dict = self.prepare_file()
+        self.vol = vol
+        self.all_patient_Dict = self.load_person() # Dict{number, list[Path]}
 
-    def prepare_file(self, ):
+    def load_person(self,):
 
         patient_Dict = {}
 
-        for i, patient in enumerate(sorted(os.listdir(self.data_path))):
-            one_patient_img_path = os.listdir(
-                os.path.join(self.data_path, patient))
+        for i, patient in enumerate(sorted(self.data_path.iterdir())):
+            # * get one patient 
+            one_patient_breath_path = os.listdir(
+                self.data_path / patient)
 
-            one_patient_full_path = []
+            patient_Dict[i] = self.prepare_file(self.data_path/patient, one_patient_breath_path)
 
-            for path in sorted(one_patient_img_path):
-                one_patient_full_path.append(
-                    os.path.join(self.data_path, patient, path))
-            patient_Dict[i] = one_patient_full_path
+        
         return patient_Dict
 
+    def prepare_file(self, pre_path: Path, one_patient: list):
+
+        one_patient_breath_path_List  = []
+
+        for breath in sorted(one_patient):
+
+            curr_path = pre_path / breath
+
+            # here prepare the one patient all breath path.
+            one_breath_full_path_List = sorted(list(iter(curr_path.iterdir())))
+            one_patient_breath_path_List.append(one_breath_full_path_List)
+
+        return one_patient_breath_path_List
+
     def __len__(self):
-        return len(self.patient_Dict)
+        person_number = len(self.all_patient_Dict.keys())
+        breath_number = len(self.all_patient_Dict[0])
+        one_breath_number = len(self.all_patient_Dict[0][0])
+
+        return person_number
 
     def __getitem__(self, idx):
         """
@@ -109,26 +157,29 @@ class CTDataset(Dataset):
             torch.Tensor: the patient data, shape like, b, c, seq, vol, h, w
         """        
 
-        # one_patient_full_path = self.patient_Dict[idx]
         one_patient_full_vol = []
 
-        for k, v in self.patient_Dict.items():
-                
-            patient_list = []
+        for breath_path in self.all_patient_Dict[idx]: # one patient path 
+            
 
-            for path in v:
-                image = sitk.ReadImage(path)
+            one_breath_img = []
+
+            for img_path in breath_path:
+                image = sitk.ReadImage(img_path)
                 image_array = sitk.GetArrayFromImage(image)
                 if self.transform:
+                    # c, h, w
                     image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
-                patient_list.append(image_array)
+                one_breath_img.append(image_array)
+                
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
-                if len(patient_list) == 128:
+                # ! or should unifrom extract 128 from all vol, not from start to index.
+                if len(one_breath_img) == self.vol:
                     break;
-            
-            one_patient_full_vol.append(torch.stack(patient_list, dim=0).squeeze()) # shape like, seq, vol, h, w
+            # c, h, w
+            one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w
 
-        return torch.stack(one_patient_full_vol, dim=0).squeeze() # shape like, seq, vol, h, w
+        return torch.stack(one_patient_full_vol, dim=0) # seq, c, v, h, w
 
 
 class CTDataModule(LightningDataModule):
@@ -144,17 +195,18 @@ class CTDataModule(LightningDataModule):
         self._NUM_WORKERS = data.num_workers
         self._IMG_SIZE = data.img_size
         self._BATCH_SIZE = train.batch_size
+        self.vol = train.vol
 
         self.train_transform = Compose(
             [
                 # ToTensor(),
-                Normalize((0.45), (0.225)),
+                # Normalize((0.45), (0.225)),
                 # RandomCrop(self._IMG_SIZE),
-                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                # Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 RandomHorizontalFlip(p=0.5),
                 # CenterCrop([150, 150])
                 # CT normalize method, for every CT image normalize to 0-1 pixel value.
-                CT_normalize(),
+                CT_normalize(self._IMG_SIZE),
             ]
         )
 
@@ -163,7 +215,7 @@ class CTDataModule(LightningDataModule):
                 # ToTensor(),
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 # CenterCrop([150, 150])
-                CT_normalize(),
+                CT_normalize(self._IMG_SIZE),
             ]
         )
 
@@ -183,12 +235,14 @@ class CTDataModule(LightningDataModule):
             self.train_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
                 transform=self.train_transform,
+                vol=self.vol,
             )
 
         if stage in ("fit", "validate", None):
             self.val_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
-                transform=self.val_transform
+                transform=self.val_transform,
+                vol=self.vol,
             )
 
         # if stage in ("predict", "test", None):

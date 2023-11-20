@@ -26,7 +26,10 @@
             "request": "launch",
             "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "train.batch_size=1"
+            ]
         }
     ]
 }

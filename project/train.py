@@ -46,10 +46,13 @@ class PredictLightningModule(LightningModule):
         self.img_size = hparams.data.img_size
         self.lr = hparams.optimizer.lr
         self.seq = hparams.train.seq
+        self.vol = hparams.train.vol
 
         self.model = EncoderDecoderConvLSTM(
             # nf=96, in_chan=1, size1=30, size2=176, size3=140)
-             nf=96, in_chan=1, size1=70, size2=120, size3=140)
+            #  nf=96, in_chan=1, size1=70, size2=120, size3=140)
+            # ! FIXME
+            nf = 96, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size)
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
 
         # TODO you should generate rpm.csv file by yourself.
@@ -85,19 +88,21 @@ class PredictLightningModule(LightningModule):
         train steop when trainer.fit called
 
         Args:
-            batch (torch.Tensor): b, f, h, w
+            batch (torch.Tensor): b, seq, vol, c, h, w
             batch_idx (int):batch index.
 
         Returns: None
         '''
-        b, seq, vol, h, w = batch.size()
+
+        b, seq, c, vol, h, w = batch.size()
+
         # save batch img
-        Batch=batch[0,0,0,...]
-        # dvf=dvf.permute(1,2,0)
-        Batch=Batch.cpu().detach().numpy()
-        plt.imshow(Batch)
-        plt.show()
-        plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Batch.png')
+        # Batch=batch[0,0,0,...]
+        # # dvf=dvf.permute(1,2,0)
+        # Batch=Batch.cpu().detach().numpy()
+        # plt.imshow(Batch)
+        # plt.show()
+        # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Batch.png')
 
         rpm = int(np.random.randint(0, 20, 1))
         logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
@@ -123,7 +128,8 @@ class PredictLightningModule(LightningModule):
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
         # invol = invol.to(device)
-        invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
+        # invol = batch.unsqueeze(dim=2)  # b, seq, c, vol, h, w
+        invol = batch.clone().detach()
 
         test_x_rpm_tensor = torch.Tensor(test_x_rpm)
         test_y_rpm_tensor = torch.Tensor(test_y_rpm)
@@ -146,7 +152,7 @@ class PredictLightningModule(LightningModule):
             phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])
         train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
         self.log('train_loss', train_loss)
-        logging.info('train_loss: %d' % train_loss)
+        logging.info('train_loss: %.4f' % train_loss)
 
         # ouyangV1 add spatial transform
         # Transform = Warp(size1=128, size2=128, size3=128).cuda() # spatial transform 
@@ -183,12 +189,12 @@ class PredictLightningModule(LightningModule):
         val step when trainer.fit called.
 
         Args:
-            batch (torch.Tensor): b, f, h, w
+            batch (torch.Tensor): b, seq, vol, c, h, w
             batch_idx (int): batch index, or patient index
 
         Returns: None
         '''
-        b, seq, vol, h, w = batch.size()
+        b, seq, c, vol, h, w = batch.size()
 
         rpm = int(np.random.randint(0, 20, 1))
         logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
@@ -216,7 +222,8 @@ class PredictLightningModule(LightningModule):
         # invol = torch.Tensor(test_x_)
         # invol = invol.permute(0, 1, 5, 2, 3, 4)
         # invol = invol.to(device)
-        invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
+        # invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
+        invol = batch.clone().detach()
         
         # ! TODO you should decrease the seq_len, to reduce the memory usage.
         # new_invol = batch[:, :self.seq, ...]
@@ -254,12 +261,12 @@ class PredictLightningModule(LightningModule):
         savepath = '/workspace/SeqX2Y_PyTorch/test/Imageresult'
         writer = sitk.ImageFileWriter()
         pI2, pI3, pI4 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...])       
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale2_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI2))
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale3_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI3))
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale4_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI4))
+        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale2_predict.nrrd")
+        # writer.Execute(sitk.GetImageFromArray(pI2))
+        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale3_predict.nrrd")
+        # writer.Execute(sitk.GetImageFromArray(pI3))
+        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale4_predict.nrrd")
+        # writer.Execute(sitk.GetImageFromArray(pI4))
         # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale5_predict.nrrd")
         # writer.Execute(sitk.GetImageFromArray(pI5))
 
@@ -293,8 +300,9 @@ class PredictLightningModule(LightningModule):
             phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...])))  # DVF torch.Size([1, 3, 3, 70, 120, 140]), batch torch.Size([1, 4, 70, 120, 140])
             phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # but DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])
         val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
         self.log('val_loss', val_loss)
-        logging.info('val_loss: %d' % val_loss)
+        logging.info('val_loss: %.4f' % val_loss)
 
         # ouyangV1
         # Transform = Warp(size1=128, size2=128, size3=128).cuda() # spatial transform
