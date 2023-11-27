@@ -29,7 +29,7 @@ import pytorch_lightning
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning import loggers as pl_loggers
 # callbacks
-from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping, lr_monitor
 from pl_bolts.callbacks import PrintTableMetricsCallback, TrainingDataMonitor
 # from utils.utils import get_ckpt_path
 
@@ -56,6 +56,8 @@ def train(hparams: DictConfig):
     # for the tensorboard
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.train.log_path, 
                                             name= "tensorboard_logs")
+
+    lr_logger = lr_monitor.LearningRateMonitor(logging_interval='step')
 
     # some callbacks
     progress_bar = TQDMProgressBar(refresh_rate=100)
@@ -89,7 +91,7 @@ def train(hparams: DictConfig):
         logger=tb_logger,
         check_val_every_n_epoch=1,
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-                   monitor, model_check_point,],
+                   monitor, model_check_point, lr_logger],
     )
 
     trainer.fit(ConvLSTMmodel, data_module)

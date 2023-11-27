@@ -10,8 +10,8 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: 2023-09-25 23:05:09
-Modified By: chenkaixu
+Last Modified: Monday November 20th 2023 4:49:26 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -35,6 +35,7 @@ from torchvision.transforms import (
     Normalize,
     CenterCrop,
 )
+from torchvision.transforms.functional import resize, crop
 
 from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
@@ -91,18 +92,27 @@ class CT_normalize(torch.nn.Module):
         # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
 
-        half_img_size = self.img_size // 2
+        # half_img_size = self.img_size // 2 
         center_loc = image.shape[1] // 2
+        bias = 180
 
-        cropd_img = normalized_img[:, center_loc-half_img_size:center_loc+half_img_size, center_loc-half_img_size:center_loc+half_img_size]
+        # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
+        # croped_img = crop(image, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
+        croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155]
 
-        # cropd_img = image[:,30:256,100:350]
+        final_img = resize(croped_img, size=[self.img_size, self.img_size])
 
-        return cropd_img
-        # return normalized_img
+        return final_img
 
 class CTDataset(Dataset):
     def __init__(self, data_path, transform=None, vol=128):
+        """init the params for the CTDataset.
+
+        Args:
+            data_path (str): main path for the dataset.
+            transform (dict, optional): the transform used for dataset. Defaults to None.
+            vol (int, optional): the limited of the vol. Defaults to 128.
+        """        
         self.data_path = Path(data_path)
         # self.targets = targets
         self.transform = transform
@@ -111,6 +121,14 @@ class CTDataset(Dataset):
 
     def load_person(self,):
 
+        """prepare the patient data, and return a Dict.
+        Load from a main path, like: /workspace/data/POPI_dataset
+        key is the patient number, value is the patient data.
+
+        Returns:
+            Dict: patient data Dict.
+        """
+        
         patient_Dict = {}
 
         for i, patient in enumerate(sorted(self.data_path.iterdir())):
@@ -138,6 +156,15 @@ class CTDataset(Dataset):
         return one_patient_breath_path_List
 
     def __len__(self):
+        """get the length of the dataset.
+        person_number: the total number of patients.
+        breath_number: the total number of breath for one patient.
+        one_breath_number: the total number of image for one breath, in detail path.
+
+        Returns:
+            int: depends on the __getitem__ idx, here is the person_number.
+        """        
+
         person_number = len(self.all_patient_Dict.keys())
         breath_number = len(self.all_patient_Dict[0])
         one_breath_number = len(self.all_patient_Dict[0][0])
@@ -188,7 +215,7 @@ class CTDataModule(LightningDataModule):
     inherit from the LightningDataMoudle, 
     """    
 
-    def __init__(self, train, data):
+    def __init__(self, train: Dict, data: Dict):
         super().__init__()
 
         self._TRAIN_PATH = data.data_path
@@ -213,7 +240,7 @@ class CTDataModule(LightningDataModule):
         self.val_transform = Compose(
             [
                 # ToTensor(),
-                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                # Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 # CenterCrop([150, 150])
                 CT_normalize(self._IMG_SIZE),
             ]
@@ -238,6 +265,9 @@ class CTDataModule(LightningDataModule):
                 vol=self.vol,
             )
 
+        # BUG: dataset leak.
+        # ! here need split the train and val dataset.
+        # ! now have dataset leak.
         if stage in ("fit", "validate", None):
             self.val_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
@@ -258,6 +288,7 @@ class CTDataModule(LightningDataModule):
         in directory and subdirectory. Add transform that subsamples and
         normalizes the video before applying the scale, crop and flip augmentations.
         '''
+
         return DataLoader(
             self.train_dataset,
             batch_size=self._BATCH_SIZE,
