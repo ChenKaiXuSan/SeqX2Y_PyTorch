@@ -84,28 +84,31 @@ class CT_normalize(torch.nn.Module):
         # return normalized img.
         # dicom_image = sitk.ReadImage(image)
         # dicom_array = sitk.GetArrayFromImage(image)
-
-        max_value = image.max()
-        min_value = image.min()
-        normalized_img = (image - min_value) / (max_value - min_value)
+        
+        # # -1~1 normalization
+        # max_value = image.max()
+        # min_value = image.min()
+        # normalized_img = 2 * ((image - min_value) / (max_value - min_value)) - 1 
 
         # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
 
         # half_img_size = self.img_size // 2 
-        center_loc = image.shape[1] // 2
+        center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
+        # center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
         bias = 180
 
         # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
         # croped_img = crop(image, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
-        croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155]
+        croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] #！undo normalized (handle croped)
+        # croped_img = normalized_img[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] # do normalized (handle croped)
 
         final_img = resize(croped_img, size=[self.img_size, self.img_size])
 
         return final_img
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, transform=None, vol=128):
+    def __init__(self, data_path, transform=None, vol=118):
         """init the params for the CTDataset.
 
         Args:
@@ -190,6 +193,7 @@ class CTDataset(Dataset):
             
 
             one_breath_img = []
+            choose_slice_one_breath_img = []
 
             for img_path in breath_path:
                 image = sitk.ReadImage(img_path)
@@ -198,13 +202,18 @@ class CTDataset(Dataset):
                     # c, h, w
                     image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
                 one_breath_img.append(image_array)
-                
+                # choose start slice to put into the one_breath_img
+                if len(one_breath_img) > 20:
+                    choose_slice_one_breath_img.append(image_array)
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
                 # ! or should unifrom extract 128 from all vol, not from start to index.
-                if len(one_breath_img) == self.vol:
+                # if len(one_breath_img) == self.vol:
+                #     break;
+                if len(choose_slice_one_breath_img) == self.vol:
                     break;
             # c, h, w
-            one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w
+            # one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w
+            one_patient_full_vol.append(torch.stack(choose_slice_one_breath_img, dim=1)) # c, v, h, w
 
         return torch.stack(one_patient_full_vol, dim=0) # seq, c, v, h, w
 
@@ -219,6 +228,7 @@ class CTDataModule(LightningDataModule):
         super().__init__()
 
         self._TRAIN_PATH = data.data_path
+        self._VAL_PATH = data.val_data_path
         self._NUM_WORKERS = data.num_workers
         self._IMG_SIZE = data.img_size
         self._BATCH_SIZE = train.batch_size
@@ -270,7 +280,7 @@ class CTDataModule(LightningDataModule):
         # ! now have dataset leak.
         if stage in ("fit", "validate", None):
             self.val_dataset = CTDataset(
-                data_path=self._TRAIN_PATH,
+                data_path=self._VAL_PATH,
                 transform=self.val_transform,
                 vol=self.vol,
             )
