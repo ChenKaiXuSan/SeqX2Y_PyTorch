@@ -44,7 +44,10 @@ def main(config: DictConfig):
     ConvLSTMmodel = EncoderDecoderConvLSTM(nf=Hidden_dim, in_chan=1, size1=128, size2=128, size3=128)
     ConvLSTMmodel.to(device)
     ConvLSTMmodel.load_state_dict(torch.load(config.test['ckpt']))
+    # 打印模型结构
+    print(ConvLSTMmodel)
     Transform = Warp(size1=128, size2=128, size3=128)
+    print(Transform)
     Transform.to(device)
 
     # Reading RPM #

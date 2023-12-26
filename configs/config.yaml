@@ -9,6 +9,7 @@ test:
   mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
   rpm: '/workspace/SeqX2Y_PyTorch/test/public_data/rpm_max.csv'
   ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
+  # ckpt: '/workspace/SeqX2Y_PyTorch/logs/2023-12-09crossval/06-28-15/tensorboard_logs/version_0/checkpoints/epoch=84-val_loss=0.40.ckpt'
   log_path: '/workspace/SeqX2Y_PyTorch/logs/test_results/'
 
 # train configs
@@ -20,7 +21,8 @@ train:
   log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
   max_epochs: 100
   gpu_num: 1 # [0, 1]
-  seq: 3 #6 #3 # predict sequence for one patient. large num will occur OOM.
+  seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
+
   vol: 118
 
 # group by defaults

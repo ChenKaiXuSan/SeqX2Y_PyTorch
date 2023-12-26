@@ -85,17 +85,17 @@ class CT_normalize(torch.nn.Module):
         # dicom_image = sitk.ReadImage(image)
         # dicom_array = sitk.GetArrayFromImage(image)
         
-        # # -1~1 normalization
-        # max_value = image.max()
-        # min_value = image.min()
-        # normalized_img = 2 * ((image - min_value) / (max_value - min_value)) - 1 
+        # -1~1 normalization
+        max_value = image.max()
+        min_value = image.min()
+        normalized_img = 2 * ((image - min_value) / (max_value - min_value)) - 1 
 
         # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
 
         # half_img_size = self.img_size // 2 
-        center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
-        # center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
+        # center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
+        center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
         bias = 180
 
         # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
@@ -216,6 +216,7 @@ class CTDataset(Dataset):
             one_patient_full_vol.append(torch.stack(choose_slice_one_breath_img, dim=1)) # c, v, h, w
 
         return torch.stack(one_patient_full_vol, dim=0) # seq, c, v, h, w
+        # len(one_patient_full_vol) = 7
 
 
 class CTDataModule(LightningDataModule):

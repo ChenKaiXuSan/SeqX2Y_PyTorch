@@ -37,6 +37,7 @@ from torchmetrics import classification
 from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 # from models.lite_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 from models.Warp import Warp
+from image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
 
 # %%
 class PredictLightningModule(LightningModule):
@@ -54,7 +55,7 @@ class PredictLightningModule(LightningModule):
             # nf=96, in_chan=1, size1=30, size2=176, size3=140)
             #  nf=96, in_chan=1, size1=70, size2=120, size3=140)
             # ! FIXME
-            nf = 48, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size)
+            nf = 86, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size)
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
 
         # TODO you should generate rpm.csv file by yourself.
@@ -95,24 +96,82 @@ class PredictLightningModule(LightningModule):
         # Taking the mean over all dimensions except the batch
         return smoothness_loss.mean(dim=[1, 2, 3, 4])
     
-    # Calculate NCC values
-    def normalized_cross_correlation(self, x, y):
-        mean_x = torch.mean(x)
-        mean_y = torch.mean(y)
-        x_normalized = x - mean_x
-        y_normalized = y - mean_y
-        ncc = torch.sum(x_normalized * y_normalized) / (torch.sqrt(torch.sum(x_normalized ** 2)) * torch.sqrt(torch.sum(y_normalized ** 2)))
-        return ncc
+    # def calculate_ssim(self, x, y):
+    #     _, _, depth, _, _ = x.shape
+    #     ssim_scores = []
 
-    # Calculate Dice values
-    def dice_coefficient(self, pred, target):
-        smooth = 1.0  # Used to prevent division by zero
-        # Binarize the prediction and target, and the threshold is usually set at 0.5
-        pred = (pred > 0.5).float()
-        target = (target > 0.5).float()
-        intersection = (pred * target).sum()
-        dice = (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)
-        return dice
+    #     # 确保x和y转换为numpy数组，因为skimage的SSIM函数需要numpy数组
+    #     x_np = x[0].cpu().detach().numpy()
+    #     y_np = y[0].cpu().detach().numpy()
+
+    #     # 遍历每个深度切片
+    #     for d in range(depth):
+    #         # 计算每个深度切片的SSIM
+    #         ssim_value = SSIM(x_np[:, d, ...], y_np[:, d, ...])
+    #         ssim_scores.append(ssim_value)
+
+    #     # 返回所有深度切片的平均SSIM
+    #     return sum(ssim_scores) / len(ssim_scores)
+    
+    # # Calculate NCC values: All dimensions together
+    # def normalized_cross_correlation(self, x, y):
+    #     mean_x = torch.mean(x) # x torch.Size([1, 1, 118, 128, 128])
+    #     mean_y = torch.mean(y) # y torch.Size([1, 1, 118, 128, 128])
+    #     x_normalized = x - mean_x
+    #     y_normalized = y - mean_y
+    #     ncc = torch.sum(x_normalized * y_normalized) / (torch.sqrt(torch.sum(x_normalized ** 2)) * torch.sqrt(torch.sum(y_normalized ** 2)))
+    #     return ncc
+
+    # Calculate NCC values: Depth dimension only
+    def normalized_cross_correlation(self, x, y):
+        # batch_size = x.shape[2]
+        batch_size, channels, depth, _, _ = x.shape
+        ncc_scores = []
+
+        # Traverse each sample in depth
+        for d in range(depth):
+            # Average
+            mean_x = torch.mean(x[:,:,d,...])
+            mean_y = torch.mean(y[:,:,d,...])
+            # normalized
+            x_normalized = x[:,:,d,...] - mean_x
+            y_normalized = y[:,:,d,...] - mean_y
+            # NCC
+            ncc = torch.sum(x_normalized * y_normalized) / (torch.sqrt(torch.sum(x_normalized ** 2)) * torch.sqrt(torch.sum(y_normalized ** 2)))
+            ncc_scores.append(ncc.item())
+        # Average NCC
+        return sum(ncc_scores) / len(ncc_scores)
+
+    # # Calculate Dice values: All dimensions together
+    # def dice_coefficient(self, pred, target):
+    #     smooth = 1.0  # Used to prevent division by zero
+    #     # Binarize the prediction and target, and the threshold is usually set at 0.5
+    #     pred = (pred > 0).float()
+    #     target = (target > 0).float()
+    #     # intersection = (pred * target).sum()
+    #     intersection = torch.sum(pred*target, dim=[2, 3, 4])
+    #     # dice = (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)
+    #     dice = (2. * intersection + smooth) / (torch.sum(pred, dim=[2, 3, 4]) + torch.sum(target, dim=[2, 3, 4]) + smooth)
+    #     return dice
+    
+    # Calculate Dice values: Depth only
+    def dice_coefficient(self, x, y):
+        _, _, depth, _, _ = x.shape
+        dice_scores = []
+
+        # Convert x and y values from [-1, 1] to [0, 1]
+        x = (x > 0).float()
+        y = (y > 0).float()
+
+        # Traverse each sample in depth
+        for d in range(depth):
+            # intersection
+            intersection = (x[:, :, d, ...] * y[:, :, d, ...]).sum()
+            # Dice
+            dice = (2. * intersection) / (x[:, :, d, ...].sum() + y[:, :, d, ...].sum())
+            dice_scores.append(dice.item())
+        # Average Dice
+        return sum(dice_scores) / len(dice_scores)
     
     # Calculate TRE values
     def calculate_tre(self, points_pred, points_true):
@@ -139,7 +198,7 @@ class PredictLightningModule(LightningModule):
         '''
 
         b, seq, c, vol, h, w = batch.size()
-
+        # batch.shape = b, seq, c, vol, h, w
         # save batch img
         # Batch=batch[0,0,0,...]
         # # dvf=dvf.permute(1,2,0)
@@ -182,24 +241,49 @@ class PredictLightningModule(LightningModule):
         test_y_rpm_tensor.cuda()
 
         # pred the video frames
-        # invol: 1, 1, 1, 128, 128, 128 # b, c, f, vol, h, w
+        # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
         # rpm_x: 1, 1
         # rpm_y: 1, 9
-        bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
 
-        # calc loss 
+        bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq) 
+
+        # Calc Loss 
         phase_mse_loss_list = []
         phase_smooth_l1_loss_list = []
 
-        # chen
+        # # Origin Loss Function
         # for phase in range(self.seq):
-        for phase in range(self.seq-1):
-            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
-            #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128])
-            # mse_value = self.mse(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
-            # mae_value = self.mae(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
-            #r2_value = self.r2_score(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))                
+        #     # MSE loss
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # bat_pred[:,:,phase,...].shape => torch.Size([1, 1, 118, 128, 128])
+        #     # smooth l1 loss
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...].shape => torch.Size([1, 3, 118, 128, 128])                     
+        # # sum two loss
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
+        # # chen orign 
+        # # for phase in range(self.seq):
+        # for phase in range(self.seq-1):
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
+        #     #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128])
+        #     # mse_value = self.mse(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
+        #     # mae_value = self.mae(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
+        #     #r2_value = self.r2_score(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))                
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
+        # 1 3 5 7 --> 2 4 6 8 
+        # for phase in range(self.seq):
+        # for phase in range(self.seq-4):
+        #     # +1 表示让预测生成的肺与后一个肺做loss
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase*2+1, ...].expand_as(bat_pred[:,:,phase,...]))) # bat_pred(1,1,3,128,128,128), batch torch.Size([1, 4, 70, 120, 140])
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase*2+1, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])              
+        # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
+        # Right 1 3 5  --> 2 4 6 
+        for phase in range(0, batch.shape[1], 2): 
+            # +1 loss was made between the predicted lung and the lung at t+1 time
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:,:,phase//2,...])))     # bat_pred(1,1,3,128,128,128), batch torch.Size([1, 4, 70, 120, 140])
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(DVF[:,:,phase//2,...])))   # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])              
         train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
         
         # Storing train loss on the True first iteration 确保只在第一次实际训练迭代时设置初始训练损失
@@ -209,8 +293,8 @@ class PredictLightningModule(LightningModule):
         relative_train_loss = train_loss / self.initial_train_loss
         #save logs
         logging.info("Patient index: %s" % (batch_idx))
-        self.log('train_loss', train_loss, on_epoch=True, on_step=True)
-        logging.info('train_loss: %.4f' % train_loss)
+        self.log('train_loss', relative_train_loss, on_epoch=True, on_step=True)
+        logging.info('train_loss: %.4f' % relative_train_loss)
         print("Current train_loss:", train_loss.item())
         #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128]) 
         # self.log('train_mse', mse_value, on_step=True, on_epoch=True, prog_bar=True)
@@ -305,83 +389,18 @@ class PredictLightningModule(LightningModule):
             bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
             # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
 
-        # save DVF img
-        savepath = '/workspace/SeqX2Y_PyTorch/test/Imageresult'
-
-        # make dir 
-        save_path = savepath + "/" + "%3.3d" % batch_idx
-        if not os.path.exists(save_path):os.makedirs(save_path)
-
-        # save dvf img
-        dvf=DVF[0,:,0,0,...]
-        dvf=dvf.permute(1,2,0)
-        dvf=dvf.cpu().detach().numpy()
-        plt.imshow(dvf)
-        plt.show()
-        plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/dvf.png')
-
-        # save bat pred
-        Bat_Pred=bat_pred[0,0,:,0,...]
-        Bat_Pred=Bat_Pred.permute(1,2,0)
-        Bat_Pred=Bat_Pred.cpu().detach().numpy()
-        # plt.imshow(Bat_Pred)
-        # plt.show()
-        plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Bat_Pred.png')
-
-        # save predict img
-        BAT_PRED = bat_pred.cpu().detach().numpy() # 1, 1, future_seq, 128, 128, 128
-        BAT_PRED = np.squeeze(BAT_PRED) # pred_feat, 128, 128, 128
-        
-        writer = sitk.ImageFileWriter()
-        pI1, pI2, pI3 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...]) #seq = 3   
-        # pI1, pI2, pI3, pI4 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...]), np.squeeze(BAT_PRED[3, ...]) #seq = 4       
-        # pI1, pI2, pI3, pI4, pI5, pI6 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...]), np.squeeze(BAT_PRED[3, ...]), np.squeeze(BAT_PRED[4, ...]), np.squeeze(BAT_PRED[5, ...]) #seq = 6      
-        # pI1, pI2, pI3, pI4, pI5, pI6, pI7, pI8 = np.squeeze(BAT_PRED[0, ...]), np.squeeze(BAT_PRED[1, ...]), np.squeeze(BAT_PRED[2, ...]), np.squeeze(BAT_PRED[3, ...]), np.squeeze(BAT_PRED[4, ...]), np.squeeze(BAT_PRED[5, ...]), np.squeeze(BAT_PRED[6, ...]), np.squeeze(BAT_PRED[6, ...]) #seq = 7
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale1_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI1))
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale2_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI2))
-        writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale3_predict.nrrd")
-        writer.Execute(sitk.GetImageFromArray(pI3))
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale4_predict.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(pI4))
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale5_predict.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(pI5))
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale6_predict.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(pI6))
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale7_predict.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(pI7))
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale8_predict.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(pI8))
-        
-        # # Permute DVF & Save DVF
-        # def dvf_(d):
-        #     x = d[0,...]
-        #     x = np.reshape(x, [1,118, 128, 128])
-        #     y = d[1,...]
-        #     y = np.reshape(y, [1,118, 128, 128])
-        #     z = d[2,...]
-        #     z = np.reshape(z, [1,118, 128, 128])
-        #     out = np.concatenate([z,y,x],0)
-        #     return out
-        
-        # Dvf = DVF.cpu().detach().numpy() # 1,3,9, 128, 128
-        # Dvf = np.squeeze(Dvf) # 3, 9, 128, 128, 128
-        # DVF2, DVF3, DVF4 = dvf_(Dvf[:,0,...]), dvf_(Dvf[:,1,...]), dvf_(Dvf[:,2,...])
-
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF2.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF2), [1,2,3,0]))) # 3 1 2
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF3.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF3), [1,2,3,0]))) # 3 1 2
-        # writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "DVF4.nrrd")
-        # writer.Execute(sitk.GetImageFromArray(np.transpose(dvf_(DVF4), [1,2,3,0]))) # 3 1 2
+        # Save images
+        # save_dvf_image(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
+        # save_bat_pred_image(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
+        save_sitk_images(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
+        save_sitk_DVF_images(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult' )
 
         # calc loss 
         phase_mse_loss_list = []
         phase_smooth_l1_loss_list = []
         # SSIM
         ssim_values = []
-        ssim = SSIM().to(device=1)
+        ssim = SSIM().to(device=1) # data_range = 2
         # NCC
         ncc_values = []
         # DICE
@@ -389,20 +408,45 @@ class PredictLightningModule(LightningModule):
 
         # Chen+SSIM+NCC+DICE
         # for phase in range(self.seq):
-        for phase in range(self.seq-1):
-            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...])))  # DVF torch.Size([1, 3, 3, 70, 120, 140]), batch torch.Size([1, 4, 70, 120, 140])
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # but DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])
-            # ssim
-            ssim_value = ssim(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
+        # for phase in range(self.seq-4):
+        for phase in range(0, batch.shape[1], 2):
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, : , phase//2, ...])))  # DVF torch.Size([1, 3, 3, 70, 120, 140]), batch torch.Size([1, 4, 70, 120, 140])
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(DVF[:, :, phase//2, ...]))) # but DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])
+            # ssim: all dimensions together
+            ssim_value = ssim(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, :, phase//2,...]))
             ssim_values.append(ssim_value.item())
-            # ncc
-            ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
-            ncc_values.append(ncc_value.item())
-            # dice
-            dice_value = self.dice_coefficient(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
-            dice_values.append(dice_value)
+            # # ssim: depth dimension only
+            # ssim_value = self.calculate_ssim(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, :, phase//2,...]))
+            # ssim_values.append(ssim_value)
 
+            # # ncc: all dimensions together
+            # ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
+            # ncc_values.append(ncc_value.item())
+            # ncc:depth dimension only
+            ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
+            ncc_values.append(ncc_value)
+            # dice
+            dice_value = self.dice_coefficient(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
+            dice_values.append(dice_value)
         val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
+        # # Orign Chen+SSIM+NCC+DICE
+        # for phase in range(self.seq):
+        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
+        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+        #     # ssim
+        #     ssim_value = ssim(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:, :, phase,...]))
+        #     # ssim_values.append(ssim_value.item())
+        #     ssim_values.append(ssim_value)
+        #     # ncc
+        #     ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
+        #     # ncc_values.append(ncc_value.item())
+        #     ncc_values.append(ncc_value)
+        #     # dice
+        #     dice_value = self.dice_coefficient(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
+        #     dice_values.append(dice_value)
+        # val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
+
         # Storing val_loss on the True first iteration 确保只在第一次实际验证迭代时设置初始验证损失
         if not self.initial_val_loss_set:
             self.initial_val_loss = val_loss.detach().clone()
@@ -414,8 +458,8 @@ class PredictLightningModule(LightningModule):
         average_dice = sum(dice_values) / len(dice_values)
         # save logs  
         logging.info("Patient index: %s" % (batch_idx)) 
-        self.log('val_loss', val_loss, on_epoch=True, on_step=True)
-        logging.info('val_loss: %.4f' % val_loss)
+        self.log('val_loss', relative_val_loss, on_epoch=True, on_step=True)
+        logging.info('val_loss: %.4f' % relative_val_loss)
         print("Current val_loss:", val_loss.item())
         # print(f"Average SSIM: {average_ssim}")
         self.log('Average SSIM', average_ssim)
@@ -423,12 +467,13 @@ class PredictLightningModule(LightningModule):
         self.log('Average NCC', average_ncc)
         logging.info('Average NCC: %.4f' % average_ncc)
         self.log('Average Dice', average_dice)
-        logging.info('Average Dice: %.4f' % average_dice.item())
+        logging.info('Average Dice: %.4f' % average_dice)
+        # logging.info('Average Dice: %.4f' % average_dice.item())
 
         # Draw the image
         metrics = ['SSIM', 'NCC', 'DICE']
-        average_dice_cpu = average_dice.cpu().item()
-        values = [average_ssim, average_ncc, average_dice_cpu]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
+        # average_dice_cpu = average_dice.cpu().item()
+        values = [average_ssim, average_ncc, average_dice]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
         # #  STYLE 1 draw bar picture
         # plt.figure(figsize=(10, 5))
         # plt.bar(metrics, values, color=['blue', 'green', 'red'])

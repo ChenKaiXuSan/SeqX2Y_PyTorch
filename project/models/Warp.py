@@ -6,8 +6,8 @@ from torch import nn
 import torch.nn.functional as F
 import os
 from glob import glob
-# from project.models.layers import SpatialTransformer
-from models.layers import SpatialTransformer
+# from project.models.layers import SpatialTransformer # test_LUNA.py use this
+from models.layers import SpatialTransformer # train.py use this
 from unet_utils import *
 
 

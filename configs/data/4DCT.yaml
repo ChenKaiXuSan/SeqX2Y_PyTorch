@@ -1,6 +1,6 @@
 # 4DCT
 # data_path: "/workspace/data/4DCT-Dicom-copy2/" # help='meta dataset path'
-data_path: "/workspace/data/POPI_seq3_dataset"
-val_data_path: "/workspace/data/POPI_valdata3"
+data_path: "/workspace/data/POPI_seq6_dataset"
+val_data_path: "/workspace/data/POPI_valdata6"
 num_workers: 8
 img_size: 128 # 128 # 224

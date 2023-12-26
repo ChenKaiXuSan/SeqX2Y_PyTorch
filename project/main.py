@@ -90,8 +90,10 @@ def train(hparams: DictConfig):
         max_epochs=hparams.train.max_epochs,
         logger=tb_logger,
         check_val_every_n_epoch=1,
+        # callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
+        #             monitor, model_check_point, lr_logger],
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-                   monitor, model_check_point, lr_logger],
+                   model_check_point, lr_logger], # 去掉monitor
     )
 
     trainer.fit(ConvLSTMmodel, data_module)

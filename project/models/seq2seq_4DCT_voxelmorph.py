@@ -105,6 +105,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         for i in range(timestep):
             output_ts = self.up1(latent[:,:,i,...]) # output_ts torch.Size([1, 96, 70, 120, 140])
             dvf = self.out(output_ts) # dvf torch.Size([1, 3, 70, 120, 140])
+            # 这里的x[:,0,...]就代表了输入的初始相位图像X0 (initial phase image), 然后用spatial transform对其进行变换 
             warped_img = self.transformer(x[:,0,...],dvf) # warped_img torch.Size([1, 1, 70, 120, 140]), x torch.Size([1, 4, 1, 70, 120, 140])
             output_img += [warped_img] # 
             output_dvf += [dvf]

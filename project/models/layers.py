@@ -27,8 +27,8 @@ class SpatialTransformer(nn.Module):
         # see: https://discuss.pytorch.org/t/how-to-register-buffer-without-polluting-state-dict
 
         self.register_buffer('grid', grid)
-    def forward(self, src, flow):
-        # new locations
+    def forward(self, src, flow): # flow is dvf
+        # new locations: 代表是空间变换后每个点的新坐标。这是通过将原始的坐标网格（由 self.grid 表示）和一个流场（由 flow 表示）相加计算得出的。
         new_locs = self.grid + flow # new_locs torch.Size([1, 3, 70, 120, 140])
         shape = flow.shape[2:] # flow.shape[2:] torch.Size([70, 120, 140])
 
@@ -42,7 +42,7 @@ class SpatialTransformer(nn.Module):
             new_locs = new_locs.permute(0, 2, 3, 1)
             new_locs = new_locs[..., [1, 0]]
         elif len(shape) == 3:
-            new_locs = new_locs.permute(0, 2, 3, 4, 1)
+            new_locs = new_locs.permute(0, 2, 3, 4, 1) # torch.Size([1, 118, 128, 128, 3])
             new_locs = new_locs[..., [2, 1, 0]]
 
         return nnf.grid_sample(src, new_locs, mode=self.mode)
