@@ -24,7 +24,7 @@ def save_sitk_images(bat_pred, batch_idx, savepath):
     BAT_PRED = bat_pred.cpu().detach().numpy()  # Convert to numpy array once and use it
     BAT_PRED = np.squeeze(BAT_PRED)
     writer = sitk.ImageFileWriter()
-    for i in range(3):  # Assuming 3 phases as in your example
+    for i in range(4):  # Assuming 3 phases as in your example
         img_array = np.squeeze(BAT_PRED[i, ...])
         writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"inhale{i+1}_predict.nrrd"))
         writer.Execute(sitk.GetImageFromArray(img_array))
@@ -45,7 +45,7 @@ def save_sitk_DVF_images(DVF, batch_idx, savepath):
     Dvf = DVF.cpu().detach().numpy()  # Convert to numpy array
     Dvf = np.squeeze(Dvf)  # Remove singleton dimensions
     
-    for i in range(3):  # Assuming 3 phases as in your example
+    for i in range(4):  # Assuming 3 phases as in your example
         DVF_img = dvf_(Dvf[:, i, ...])
         writer = sitk.ImageFileWriter()
         writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"DVF{i+1}.nrrd"))
