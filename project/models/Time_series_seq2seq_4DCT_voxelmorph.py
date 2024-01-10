@@ -1,3 +1,25 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+'''
+File: /workspace/SeqX2Y_PyTorch/project/models/Time_series_seq2seq_4DCT_voxelmorph.py
+Project: /workspace/SeqX2Y_PyTorch/project/models
+Created Date: Tuesday January 9th 2024
+Author: Kaixu Chen
+-----
+Comment:
+
+Have a good code time :)
+-----
+Last Modified: Tuesday January 9th 2024 9:14:29 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+-----
+Copyright (c) 2024 The University of Tsukuba
+-----
+HISTORY:
+Date      	By	Comments
+----------	---	---------------------------------------------------------
+'''
+
 import torch
 import torch.nn as nn
 
@@ -7,18 +29,28 @@ from unet_utils import *
 
 # 3D CNN
 class Encoder3DCNN(nn.Module):
+
+    #! I think the 3D CNN structure have some problem.
     def __init__(self, in_channels, out_channels):
         super(Encoder3DCNN, self).__init__()
-        self.conv1 = nn.Conv3d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm3d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.pool = nn.MaxPool3d(kernel_size=2, stride=2)
+        
+        self.conv1 = nn.Conv3d(in_channels, 64, kernel_size=3, padding=1)
+        self.relu1 = nn.ReLU(inplace=True)
+        
+        self.conv2 = nn.Conv3d(64, 128, kernel_size=3, padding=1)
+        self.relu2 = nn.ReLU(inplace=True)
+        
+        self.conv3 = nn.Conv3d(128, out_channels, kernel_size=3, padding=1)
+        self.relu3 = nn.ReLU(inplace=True)
 
+        self.pool = nn.MaxPool3d(kernel_size=2, stride=2)
+    
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
+        x = self.relu1(self.conv1(x))
+        x = self.relu2(self.conv2(x))
+        x = self.relu3(self.conv3(x))
         x = self.pool(x)
+
         return x
 
 class EncoderDecoderConvLSTM(nn.Module):
@@ -66,26 +98,24 @@ class EncoderDecoderConvLSTM(nn.Module):
         self.transformer = SpatialTransformer((size1, size2, size3))
 
         # 添加3D CNN encoder
-        self.encoder3d_cnn = Encoder3DCNN(in_channels=in_chan, out_channels=nf)
-
-
+        self.encoder3d_cnn = Encoder3DCNN(in_channels=3, out_channels=nf)
 
     def autoencoder(self, x, seq_len, batch_2D, future_step, h_t4, c_t4, h_t5, c_t5, h_t6, c_t6, h_t7, c_t7): #!origin
-    # def autoencoder(self, x, seq_len, rpm_x, rpm_y, future_step, h_t4, c_t4, h_t5, c_t5, h_t6, c_t6):
-        latent = []
-        out = []
-        # encoder
-        e1 = []
-        e2 = []
-        e3 = []
+        """ autoencoder-decoder structure for 4DCT and time series data.
 
+        Args:
+            x (torch.Tensor): 4DCT data, (batch, seq_len, channel, depth, height, width)
+            seq_len (int): the length of the 4DCT data
+            batch_2D (torch.Tensor): time series data, (batch, channel, t, height, width)
+            future_step (_type_): _description_
+        """        
+
+        latent = []
+        
         for t in range(seq_len): # test_LUNA.py used this
-        # for t in range(0, seq_len, -1):
-        # for t in range(seq_len-1, 0, -1): # train.py used this
-            #print(rpm_x.shape, rpm_y.shape)
 
             # 应用3D CNN encoder
-            batch_2D_encoded = self.encoder3d_cnn(batch_2D[:, :-1, ...].unsqueeze(2)) # unsqueeze(2) # 假设需要在第2维度加入"depth"维度   batch, frames, channel, weiht, hight
+            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...]) 
 
             h_t1 = self.encoder1_conv(x[:,t,...])
             down1 = self.down1(h_t1)
@@ -95,29 +125,29 @@ class EncoderDecoderConvLSTM(nn.Module):
             h_t5, c_t5 = self.ConvLSTM3d2(input_tensor = h_t4, # c_t5 h_t5.shape=>[1,96,35,60,70]  input:(nf=96, in_chan=1, size1=70, size2=120, size3=140)
                                    cur_state = [h_t5,c_t5])
 
-            # ! here, multiply the rpm and feature
-            h_t5 = torch.mul(h_t5,torch.squeeze(batch_2D_encoded[:, :, t, :, :]))
-            # h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t])) # from back to front
-            # ！h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
-            # simple multiplication between rpm and feature
-            encoder_vector = h_t5
+            # check shape 
+            assert len(h_t5.shape) == len(time_series_fat.shape), "the dimension of h_t5 and batch_2D_encoded is not same."
 
+            # fuse the 4DCT feature and time series feature, for encoder
+            encoder_vector = h_t5 @ time_series_fat
 
         for t in range(future_step):
 
-            batch_2D_encoded = self.encoder3d_cnn(batch_2D[:, 0:, ...].unsqueeze(2))  # batch, frames, channel, weiht, hight
-            batch_2D_encoded = batch_2D_encoded.permute(0,2,1,3,4)
+            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, 1:, ...])
 
             h_t6, c_t6 = self.ConvLSTM3d3(input_tensor=encoder_vector,
                                    cur_state=[h_t6, c_t6])
-            
             h_t7, c_t7 = self.ConvLSTM3d4(input_tensor=h_t6, # c_t7 h_t7.shape=>[1,96,35,60,70]  input:(nf=96, in_chan=1, size1=70, size2=120, size3=140)
                                    cur_state=[h_t7, c_t7])
-            # ！h_t7 = torch.mul(h_t7, torch.squeeze(rpm_y[0,t]))
-            h_t7 = torch.mul(h_t7, torch.squeeze(batch_2D_encoded[:, :, t, :, :]))
-            # Simple multiplication between rpm and later phase features
-            encoder_vector = h_t7
-            latent += [h_t7]  # 了解到 h_t7 是一个形状为 torch.Size([1, 96, 35, 60, 70]) 的张量后，这行代码 latent += [h_t7] 的操作意味着将这个五维张量作为一个元素添加到名为 latent 的列表中。在这个上下文中，latent 可能被用来收集一系列的张量，每个张量可能代表不同时间步的潜在表示或特征图。通过这种方式，可以在列表中追踪并存储多个时间步的状态。
+
+            # check shape
+            assert len(h_t7.shape) == len(time_series_fat.shape), "the dimension of h_t7 and batch_2D_encoded is not same."
+
+            # fuse the 4DCT feature and time series feature, for decoder
+            decoder_vector = h_t7 @ time_series_fat
+
+            latent += [decoder_vector]
+            # 了解到 h_t7 是一个形状为 torch.Size([1, 96, 35, 60, 70]) 的张量后，这行代码 latent += [h_t7] 的操作意味着将这个五维张量作为一个元素添加到名为 latent 的列表中。在这个上下文中，latent 可能被用来收集一系列的张量，每个张量可能代表不同时间步的潜在表示或特征图。通过这种方式，可以在列表中追踪并存储多个时间步的状态。
 
             # encoder_vector = h_t6 # delete 1 convlstm open this
             # latent += [h_t6]
@@ -153,9 +183,6 @@ class EncoderDecoderConvLSTM(nn.Module):
         input_tensor:
             5-D Tensor of shape (b, t, c, h, w)        #   batch, time, channel, height, width
         """
-
-        # ? i think the seq_len need to map with the future seq
-        # ? maybe, the seq_len mean that for one patient, in different seq_len break time (continuous)
         
         # find size of different input dimensions
         b, seq_len, _, d, h, w = x.size()

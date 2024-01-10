@@ -24,28 +24,26 @@ import os, sys
 from pathlib import Path
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torchvision.transforms import (
     Compose,
-    Lambda,
-    RandomCrop,
     Resize,
     RandomHorizontalFlip,
     ToTensor,
     Normalize,
-    CenterCrop,
+    Lambda
 )
-from torchvision.transforms.functional import resize, crop
-from torch.utils.data.dataset import ConcatDataset
+
+from torchvision.transforms.functional import resize
 
 from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
-from PIL import Image
 
-import SimpleITK as sitk
+from ct_dataset import CTDataset
 
 class CT_normalize(torch.nn.Module):
-    """ CT
+    """ CT normalize function for the CT image.
+    This function to normalize the pixel value to -1~1.
 
     Args:
         torch (_type_): _description_
@@ -109,296 +107,6 @@ class CT_normalize(torch.nn.Module):
 
         return final_img
 
-# class CTDataset(Dataset):
-#     def __init__(self, data_path, transform=None, vol=118):
-#         """init the params for the CTDataset.
-
-#         Args:
-#             data_path (str): main path for the dataset.
-#             transform (dict, optional): the transform used for dataset. Defaults to None.
-#             vol (int, optional): the limited of the vol. Defaults to 128.
-#         """        
-#         self.data_path = Path(data_path)
-#         # self.targets = targets
-#         self.transform = transform
-#         self.vol = vol
-#         self.all_patient_Dict = self.load_person() # Dict{number, list[Path]}
-
-#     def load_person(self,):
-
-#         """prepare the patient data, and return a Dict.
-#         Load from a main path, like: /workspace/data/POPI_dataset
-#         key is the patient number, value is the patient data.
-
-#         Returns:
-#             Dict: patient data Dict.
-#         """
-        
-#         patient_Dict = {}
-
-#         for i, patient in enumerate(sorted(self.data_path.iterdir())):
-#             # * get one patient 
-#             one_patient_breath_path = os.listdir(
-#                 self.data_path / patient)
-
-#             patient_Dict[i] = self.prepare_file(self.data_path/patient, one_patient_breath_path)
-
-        
-#         return patient_Dict
-
-#     def prepare_file(self, pre_path: Path, one_patient: list):
-
-#         one_patient_breath_path_List  = []
-
-#         for breath in sorted(one_patient):
-
-#             curr_path = pre_path / breath
-
-#             # here prepare the one patient all breath path.
-#             one_breath_full_path_List = sorted(list(iter(curr_path.iterdir())))
-#             one_patient_breath_path_List.append(one_breath_full_path_List)
-
-#         return one_patient_breath_path_List
-
-#     def __len__(self):
-#         """get the length of the dataset.
-#         person_number: the total number of patients.
-#         breath_number: the total number of breath for one patient.
-#         one_breath_number: the total number of image for one breath, in detail path.
-
-#         Returns:
-#             int: depends on the __getitem__ idx, here is the person_number.
-#         """        
-
-#         person_number = len(self.all_patient_Dict.keys())
-#         breath_number = len(self.all_patient_Dict[0])
-#         one_breath_number = len(self.all_patient_Dict[0][0])
-
-#         return person_number
-
-#     def __getitem__(self, idx):
-#         """
-#         __getitem__, get the patient data from the patient_Dict.
-#         Here we need load all of the patient data, and return a 4D tensor.
-#         Shape like, b, c, seq, vol, h, w
-
-#         Args:
-#             idx (_type_): not use here.
-
-#         Returns:
-#             torch.Tensor: the patient data, shape like, b, c, seq, vol, h, w
-#         """        
-
-#         one_patient_full_vol = []
-
-#         for breath_path in self.all_patient_Dict[idx]: # one patient path 
-            
-
-#             one_breath_img = []
-#             choose_slice_one_breath_img = []
-
-#             for img_path in breath_path:
-#                 image = sitk.ReadImage(img_path)
-#                 image_array = sitk.GetArrayFromImage(image)
-#                 if self.transform:
-#                     # c, h, w
-#                     image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
-#                 one_breath_img.append(image_array)
-#                 # choose start slice to put into the one_breath_img
-#                 if len(one_breath_img) > 20:
-#                     choose_slice_one_breath_img.append(image_array)
-#                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
-#                 # ! or should unifrom extract 128 from all vol, not from start to index.
-#                 # if len(one_breath_img) == self.vol:
-#                 #     break;
-#                 if len(choose_slice_one_breath_img) == self.vol:
-#                     break;
-#             # c, h, w
-#             # one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w
-#             one_patient_full_vol.append(torch.stack(choose_slice_one_breath_img, dim=1)) # c, v, h, w
-
-#         return torch.stack(one_patient_full_vol, dim=0) # seq, c, v, h, w
-#         # len(one_patient_full_vol) = 7
-    
-class CTDataset(Dataset):
-    def __init__(self, data_path, data_path2D, transform=None, vol=118):
-        """init the params for the CTDataset.
-
-        Args:
-            data_path (str): main path for the dataset.
-            transform (dict, optional): the transform used for dataset. Defaults to None.
-            vol (int, optional): the limited of the vol. Defaults to 128.
-        """  
-        # 2D time series      
-        self.data_path2D = Path(data_path2D)
-        self.samples = self._load_samples()
-        # CT
-        self.data_path = Path(data_path)
-        # self.targets = targets
-        self.transform = transform
-        self.vol = vol
-        self.all_patient_Dict = self.load_person() # Dict{number, list[Path]}
-   
-    def _load_samples(self):
-        """
-        加载所有时间序列文件夹内的图像文件路径。
-        返回:
-            list: 包含所有图像文件路径的列表。
-        """
-        samples = []
-        # 遍历数据集目录
-        for sequence_folder in sorted(self.data_path2D.iterdir()):
-            if sequence_folder.is_dir():
-                # 遍历序列文件夹内的所有图像文件
-                sequence_images = sorted(sequence_folder.glob('*.png'))
-                samples.append(sequence_images)
-        return samples
-        
-    def load_person(self,):
-
-        """prepare the patient data, and return a Dict.
-        Load from a main path, like: /workspace/data/POPI_dataset
-        key is the patient number, value is the patient data.
-
-        Returns:
-            Dict: patient data Dict.
-        """
-        
-        patient_Dict = {}
-
-        for i, patient in enumerate(sorted(self.data_path.iterdir())):
-            # * get one patient 
-            one_patient_breath_path = os.listdir(
-                self.data_path / patient)
-
-            patient_Dict[i] = self.prepare_file(self.data_path/patient, one_patient_breath_path)
-
-        
-        return patient_Dict
-
-    def prepare_file(self, pre_path: Path, one_patient: list):
-
-        one_patient_breath_path_List  = []
-
-        for breath in sorted(one_patient):
-
-            curr_path = pre_path / breath
-
-            # here prepare the one patient all breath path.
-            one_breath_full_path_List = sorted(list(iter(curr_path.iterdir())))
-            one_patient_breath_path_List.append(one_breath_full_path_List)
-
-        return one_patient_breath_path_List
-
-    def __len__(self):
-        """get the length of the dataset.
-        person_number: the total number of patients.
-        breath_number: the total number of breath for one patient.
-        one_breath_number: the total number of image for one breath, in detail path.
-
-        Returns:
-            int: depends on the __getitem__ idx, here is the person_number.
-        """        
-
-        person_number = len(self.all_patient_Dict.keys())
-        breath_number = len(self.all_patient_Dict[0])
-        one_breath_number = len(self.all_patient_Dict[0][0])
-        # 2D time series
-        person_number_2D = len(self.samples)
-
-        return person_number
-
-    def __getitem__(self, idx):
-        """
-        __getitem__, get the patient data from the patient_Dict.
-        Here we need load all of the patient data, and return a 4D tensor.
-        Shape like, b, c, seq, vol, h, w
-
-        Args:
-            idx (_type_): not use here.
-
-        Returns:
-            torch.Tensor: the patient data, shape like, b, c, seq, vol, h, w
-        """        
-
-        one_patient_full_vol = []
-
-        for breath_path in self.all_patient_Dict[idx]: # one patient path 
-            
-
-            one_breath_img = []
-            choose_slice_one_breath_img = []
-
-            for img_path in breath_path:
-                image = sitk.ReadImage(img_path)
-                image_array = sitk.GetArrayFromImage(image)
-                if self.transform:
-                    # c, h, w
-                    image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
-                one_breath_img.append(image_array)
-                # choose start slice to put into the one_breath_img
-                if len(one_breath_img) > 20:
-                    choose_slice_one_breath_img.append(image_array)
-                # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
-                # ! or should unifrom extract 128 from all vol, not from start to index.
-                # if len(one_breath_img) == self.vol:
-                #     break;
-                if len(choose_slice_one_breath_img) == self.vol:
-                    break;
-            # c, h, w
-            # one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w
-            one_patient_full_vol.append(torch.stack(choose_slice_one_breath_img, dim=1)) # c, v, h, w
-
-        return torch.stack(one_patient_full_vol, dim=0) # seq, c, v, h, w
-        # len(one_patient_full_vol) = 7
-
-class TimeSeries2DDataset(Dataset):
-    def __init__(self, data_path2D, transform=None):
-        """
-        初始化2D时间序列图像的数据集。
-        参数:
-            data_path (str): 数据集目录的路径。
-            transform (callable, 可选): 应用于样本的可选转换操作。
-        """
-        self.data_path2D = Path(data_path2D)
-        self.transform = transform
-        self.samples = self._load_samples()
-
-    def _load_samples(self):
-        """
-        加载所有时间序列文件夹内的图像文件路径。
-        返回:
-            list: 包含所有图像文件路径的列表。
-        """
-        samples = []
-        # 遍历数据集目录
-        for sequence_folder in sorted(self.data_path2D.iterdir()):
-            if sequence_folder.is_dir():
-                # 遍历序列文件夹内的所有图像文件
-                sequence_images = sorted(sequence_folder.glob('*.png'))
-                samples.append(sequence_images)
-        return samples
-
-    def __len__(self):
-        """
-        返回数据集中序列的总数。
-        """
-        return len(self.samples)
-
-    def __getitem__(self, idx):
-        """
-        从数据集中检索单个序列的所有图像。
-        参数:
-            idx (int): 要检索的序列的索引。
-        返回:
-            list: 包含一系列转换后图像的列表。
-        """
-        sequence_images = self.samples[idx]
-        images = [Image.open(img_path) for img_path in sequence_images]
-        if self.transform is not None:
-            images = [self.transform(image) for image in images]
-        return images
-
 class CTDataModule(LightningDataModule):
     """
     CTDataModule, used for prepare the train/val/test dataloader.
@@ -414,29 +122,17 @@ class CTDataModule(LightningDataModule):
         self._IMG_SIZE = data.img_size
         self._BATCH_SIZE = train.batch_size
         self.vol = train.vol
+
         # 2D time series path
         self._TIME_SERIES_DATA_PATH = data.data_path2D
         self._VAL_TIME_SERIES_DATA_PATH = data.val_data_path2D
 
+        # 4D CT transform
         self.train_transform = Compose(
             [
-                # ToTensor(),
-                # Normalize((0.45), (0.225)),
-                # RandomCrop(self._IMG_SIZE),
-                # Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 RandomHorizontalFlip(p=0.5),
-                # CenterCrop([150, 150])
                 # CT normalize method, for every CT image normalize to 0-1 pixel value.
                 CT_normalize(self._IMG_SIZE),
-            ]
-        )
-
-        self.train_time_series_transform = Compose(
-            [
-                # ToTensor(),
-
-                Normalize((0.45), (0.225)),
-                Resize(size=[self._IMG_SIZE, self._IMG_SIZE])
             ]
         )
 
@@ -446,6 +142,25 @@ class CTDataModule(LightningDataModule):
                 # Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 # CenterCrop([150, 150])
                 CT_normalize(self._IMG_SIZE),
+            ]
+        )
+
+        # 2D time series transform
+        self.train_transform_time_series = Compose(
+            [
+                ToTensor(),
+                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                Normalize((0.45), (0.225)),
+                lambda x: x/255.0,
+            ]
+        )
+
+        self.val_transform_time_series = Compose(
+            [
+                ToTensor(),
+                Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
+                Normalize((0.45), (0.225)),
+                lambda x: x/255.0,
             ]
         )
 
@@ -460,40 +175,25 @@ class CTDataModule(LightningDataModule):
             stage (Optional[str], optional): trainer.stage, in ('fit', 'validate', 'test', 'predict'). Defaults to None.
         '''
 
-        # if stage == "fit" or stage == None:
         if stage in ("fit", None):
             self.train_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
-                transform=self.train_transform,
+                data_path2D=self._TIME_SERIES_DATA_PATH,                
+                ct_transform=self.train_transform,
+                time_series_transform=self.train_transform_time_series,
                 vol=self.vol,
             )
-            # 设置时间序列数据集
-            self.train_time_series_dataset = TimeSeries2DDataset(
-                data_path2D=self._TIME_SERIES_DATA_PATH,
-                transform=self.train_time_series_transform, # 假设你想应用与训练数据集相同的转换
-            )
-
+            
         # BUG: dataset leak.
-        # ! here need split the train and val dataset.
         # ! now have dataset leak.
         if stage in ("fit", "validate", None):
             self.val_dataset = CTDataset(
                 data_path=self._VAL_PATH,
-                transform=self.val_transform,
+                data_path2D=self._VAL_TIME_SERIES_DATA_PATH,
+                ct_transform=self.val_transform,
+                time_series_transform=self.val_transform_time_series,
                 vol=self.vol,
             )
-            # 设置时间序列数据集
-            self.val_time_series_dataset = TimeSeries2DDataset(
-                data_path2D=self._VAL_TIME_SERIES_DATA_PATH,
-                transform=self.train_time_series_transform,
-            )
-
-        # if stage in ("predict", "test", None):
-        #     self.test_pred_dataset = WalkDataset(
-        #         data_path=os.path.join(data_path, "val"),
-        #         clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-        #         transform=transform
-        #     )
 
     def train_dataloader(self) -> DataLoader:
         '''
@@ -502,24 +202,14 @@ class CTDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         '''
 
-        DataLoader1 = DataLoader(
+        return DataLoader(
             self.train_dataset,
             batch_size=self._BATCH_SIZE,
             num_workers=self._NUM_WORKERS,
+            shuffle=True,
             pin_memory=True,
             drop_last=False,
         )
-        # 添加新的Time series DataLoader
-        DataLoader2 = DataLoader(
-            self.train_time_series_dataset,
-            batch_size=self._BATCH_SIZE,
-            num_workers=self._NUM_WORKERS,
-            # shuffle=True,  # 或者根据需要设置为 False
-            pin_memory=True,
-            drop_last=False,
-        )
-
-        return [DataLoader1, DataLoader2]
 
     def val_dataloader(self) -> DataLoader:
         '''
@@ -528,37 +218,11 @@ class CTDataModule(LightningDataModule):
         sert parameters for DataLoader prepare.        
         '''
 
-        DataLoader1 = DataLoader(
-            self.val_dataset,
-            batch_size=self._BATCH_SIZE,
-            num_workers=self._NUM_WORKERS,
-            shuffle=False,
-            pin_memory=True,
-            drop_last=False
-        )
-        # 添加新的Time series DataLoader
-        DataLoader2 = DataLoader(
-            self.val_time_series_dataset,
-            batch_size=self._BATCH_SIZE,
-            num_workers=self._NUM_WORKERS,
-            shuffle=False,
-            pin_memory=True,
-            drop_last=False,
-        )
-        # return {'D1':DataLoader1, 'D2':DataLoader2}
-        return [DataLoader1, DataLoader2]
-
-    def test_dataloader(self) -> DataLoader:
-        '''
-        create the Walk train partition from the list of video labels
-        in directory and subdirectory. Add transform that subsamples and 
-        normalizes the video before applying the scale, crop and flip augmentations.
-        '''
         return DataLoader(
             self.val_dataset,
             batch_size=self._BATCH_SIZE,
             num_workers=self._NUM_WORKERS,
             shuffle=False,
             pin_memory=True,
-            drop_last=True,
+            drop_last=False
         )

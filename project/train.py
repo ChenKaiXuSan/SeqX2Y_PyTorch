@@ -10,25 +10,23 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: 2023-10-02 08:14:09
-Modified By: chenkaixu
+Last Modified: Sunday December 10th 2023 6:34:49 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
+
+10-01-2024	Kaixu Chen	add the 3D CNN to process the time series 3D image.
 2023-09-26	KX.C	change the train and val process, here we think need use the self.seq to control the seq_len, to reduce the memory usage.
 
 '''
 
 # %%
 import os, csv, logging, shutil
-import seaborn as sns
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 import matplotlib.pyplot as plt
-import SimpleITK as sitk
 import torchmetrics
 from torchmetrics import StructuralSimilarityIndexMeasure as SSIM
 from pytorch_lightning import LightningModule
@@ -58,11 +56,6 @@ class PredictLightningModule(LightningModule):
             # ! FIXME  # input4 output4 93 max
             nf = 48, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size) 
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
-
-        # TODO you should generate rpm.csv file by yourself.
-        # load RPM
-        with open(hparams.test['rpm'], 'r') as f:
-            self.data = list(csv.reader(f, delimiter=","))
 
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
@@ -96,7 +89,7 @@ class PredictLightningModule(LightningModule):
         # smoothness_loss = dvf_grad_x**2 + dvf_grad_y**2 + dvf_grad_z**2
         # Taking the mean over all dimensions except the batch
         return smoothness_loss.mean(dim=[1, 2, 3, 4])
-    
+
     # def calculate_ssim(self, x, y):
     #     _, _, depth, _, _ = x.shape
     #     ssim_scores = []
@@ -187,7 +180,7 @@ class PredictLightningModule(LightningModule):
         tre = torch.sqrt(torch.sum((points_pred - points_true) ** 2, dim=1))
         return torch.mean(tre)
 
-    def training_step(self, batch: torch.Tensor, batch_2D: torch.Tensor, batch_idx:int):
+    def training_step(self, batch: torch.Tensor, batch_idx: int):
         '''
         main.py中的trainer.fit(ConvLSTMmodel, data_module)会自动匹配网络模型(即ConvLSTMmodel实例化后的PredictLightningModule)和dataset(即data_module实例化后的CTDataModule),
         匹配后, 这里的training_step会和data_loader.py中 CTDataModule 的 train_dataloader 相匹配, batch会接收来自train_dataloader return来的[DataLoader1, DataLoader2],
@@ -195,67 +188,32 @@ class PredictLightningModule(LightningModule):
 
         train steop when trainer.fit called
 
-        Args:
-            batch (torch.Tensor): b, seq, vol, c, h, w
-            batch_idx (int):batch index.
+        sample_info_dict = {
+            'patient_id': idx,
+            '4DCT': torch.stack(one_patient_full_vol, dim=0),
+            '2D_time_series': torch.stack(one_patient_time_series, dim=0) # seq, c, h, w
+        }
 
-        Returns: None
+        Args:
+            batch (torch.Tensor): is sample info dict from dataloader.
+            batch_idx (int): batch index, or patient index
+        Returns: train loss, pytorch lightning will auto backward and update the model.
+        
         '''
 
-        b, seq, c, vol, h, w = batch.size()
+        # unpack the batch
+        ct_data = batch['4DCT']
+        time_series_img = batch['2D_time_series']
 
-        # batch = batch[0] # DataLoader1
-        # batch_2D = batch[1] # DataLoader2
+        b, seq, c, vol, h, w = ct_data.size()
+        b, c, t, h, w = time_series_img.size()
 
-        # batch.shape = b, seq, c, vol, h, w
-        # save batch img
-        # Batch=batch[0,0,0,...]
-        # # dvf=dvf.permute(1,2,0)
-        # Batch=Batch.cpu().detach().numpy()
-        # plt.imshow(Batch)
-        # plt.show()
-        # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Batch.png')
-
-        rpm = int(np.random.randint(0, 20, 1))
-        #! RPM Bug logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
-        # logging.info("Patient index: %s" % (batch_idx))
-
-        RPM = np.array(self.data)
-        RPM = np.float32(RPM)
-        test_RPM = RPM
-
-        # load rpm
-        # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
-        # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
-        # test_y_rpm = np.expand_dims(test_y_rpm,0)
-
-        # TODO you should fix this, mapping with your data.
-        # ! fake data 
-        test_x_rpm = np.random.rand(1, 7) # patient index, seq
-        test_y_rpm = np.random.rand(1, 7) # same to the seq
-        # test_x_rpm *= 10
-        # test_y_rpm *= 10
-
-        # invol = torch.Tensor(test_x_)
-        # invol = invol.permute(0, 1, 5, 2, 3, 4)
-        # invol = invol.to(device)
-        # invol = batch.unsqueeze(dim=2)  # b, seq, c, vol, h, w
-        invol = batch.clone().detach()
-
-        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
-        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
-        test_x_rpm_tensor.cuda()
-        test_y_rpm_tensor.cuda()
+        invol = ct_data.clone().detach()
 
         # pred the video frames
         # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
-        # rpm_x: 1, 1
-        # rpm_y: 1, 9
-
-        # bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)
-        bat_pred, DVF = self.model(invol, batch_2D, future_seq=self.seq)  
+        # time_series_img: 1, 1, 3, 128, 128 # b, c, seq (f), h, w
+        bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  
 
         # Calc Loss 
         phase_mse_loss_list = []
@@ -273,8 +231,8 @@ class PredictLightningModule(LightningModule):
         # chen orign 
         # for phase in range(self.seq):
         for phase in range(self.seq):
-            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], ct_data[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
             #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128])
             # mse_value = self.mse(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
             # mae_value = self.mae(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
@@ -341,67 +299,37 @@ class PredictLightningModule(LightningModule):
 
         return train_loss
 
-    def validation_step(self, batch: torch.Tensor, batch_2D: torch.Tensor, batch_idx: int):
+    def validation_step(self, batch: torch.Tensor, batch_idx: int):
         '''
         val step when trainer.fit called.
 
-        Args:
-            batch (torch.Tensor): b, seq, vol, c, h, w
-            batch_idx (int): batch index, or patient index
-            batch_2D : 2d time series images
+        sample_info_dict = {
+            'patient_id': idx,
+            '4DCT': torch.stack(one_patient_full_vol, dim=0),
+            '2D_time_series': torch.stack(one_patient_time_series, dim=0) # seq, c, h, w
+        }
 
+        Args:
+            batch (torch.Tensor): is sample info dict from dataloader.
+            batch_idx (int): batch index, or patient index
         Returns: None
         '''
-        b, seq, c, vol, h, w = batch.size()
-        
-        # batch = batch['D1'] # DataLoader1
-        # batch_2D = batch['D2'] # DataLoader2
 
-        rpm = int(np.random.randint(0, 20, 1))
-        # logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
-        # logging.info("Patient index: %s" % (batch_idx))
+        # unpack the batch
+        ct_data = batch['4DCT']
+        time_series_img = batch['2D_time_series']
 
-        RPM = np.array(self.data)
-        RPM = np.float32(RPM)
-        test_RPM = RPM
+        b, seq, c, vol, h, w = ct_data.size()
+        b, c, t, h, w = time_series_img.size()
 
-        # ! TODO you should fix this, mapping with your data.
-        # load rpm
-        # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
-        # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
-        # test_y_rpm = np.expand_dims(test_y_rpm,0)
-
-        # ! fake data
-        # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
-        # test_y_rpm = np.random.rand(1, 10)[0,1:]
-        test_x_rpm = np.random.rand(1, 7) #!patient index, seq
-        test_y_rpm = np.random.rand(1, 7) # same to the saeq
-        # test_x_rpm *= 10
-        # test_y_rpm *= 10
-
-        # invol = torch.Tensor(test_x_)
-        # invol = invol.permute(0, 1, 5, 2, 3, 4)
-        # invol = invol.to(device)
-        # invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
-        invol = batch.clone().detach()
-        
-        # ! TODO you should decrease the seq_len, to reduce the memory usage.
-        # new_invol = batch[:, :self.seq, ...]
-
-        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
-        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
-        test_x_rpm_tensor.cuda()
-        test_y_rpm_tensor.cuda()
+        invol = ct_data.clone().detach()
 
         # pred the video frames
         with torch.no_grad():
-            # invol: 1, 9, 1, 128, 128, 128 # b, seq, c, vol, h, w
-            # rpm_x: 1, 1
-            # rpm_y: 1, 9
+            # invol: 1, 4, 1, 128, 128, 128 # b, seq, c, vol, h, w
+            # time_series_img: 1, 4, 3, 128, 128 # b, seq (f), c, h, w
             # bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
-            bat_pred, DVF = self.model(invol, batch_2D, future_seq=self.seq)  # [1,2,3,176,176]
+            bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  # [1,2,3,176,176]
             # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
 
         # Save images
@@ -421,45 +349,23 @@ class PredictLightningModule(LightningModule):
         # DICE
         dice_values = []
 
-        # # Chen+SSIM+NCC+DICE
-        # # for phase in range(self.seq):
-        # # for phase in range(self.seq-4):
-        # for phase in range(0, batch.shape[1], 2):
-        #     phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, : , phase//2, ...])))  # DVF torch.Size([1, 3, 3, 70, 120, 140]), batch torch.Size([1, 4, 70, 120, 140])
-        #     phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(DVF[:, :, phase//2, ...]))) # but DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])
-        #     # ssim: all dimensions together
-        #     ssim_value = ssim(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, :, phase//2,...]))
-        #     ssim_values.append(ssim_value.item())
-        #     # # ssim: depth dimension only
-        #     # ssim_value = self.calculate_ssim(bat_pred[:,:,phase//2,...], batch[:, phase+1, ...].expand_as(bat_pred[:, :, phase//2,...]))
-        #     # ssim_values.append(ssim_value)
-
-        #     # # ncc: all dimensions together
-        #     # ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
-        #     # ncc_values.append(ncc_value.item())
-        #     # ncc:depth dimension only
-        #     ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
-        #     ncc_values.append(ncc_value)
-        #     # dice
-        #     dice_value = self.dice_coefficient(bat_pred[:,:,phase//2,...], batch[:,phase+1,...].expand_as(bat_pred[:,:,phase//2,...]))
-        #     dice_values.append(dice_value)
-        # val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
-
         # Orign Chen+SSIM+NCC+DICE
         for phase in range(self.seq):
-            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
-            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+            phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
+            phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], ct_data[:, phase, ...].expand_as(DVF[:,:,phase,...])))
+
             # ssim
-            ssim_value = ssim(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:, :, phase,...]))
+            ssim_value = ssim(bat_pred[:,:,phase,...], ct_data[:, phase, ...].expand_as(bat_pred[:, :, phase,...]))
             # ssim_values.append(ssim_value.item())
             ssim_values.append(ssim_value.item())
             # ncc
-            ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
+            ncc_value = self.normalized_cross_correlation(bat_pred[:,:,phase,...], ct_data[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
             # ncc_values.append(ncc_value.item())
             ncc_values.append(ncc_value)
             # dice
-            dice_value = self.dice_coefficient(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
+            dice_value = self.dice_coefficient(bat_pred[:,:,phase,...], ct_data[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
             dice_values.append(dice_value)
+
         val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
         # Storing val_loss on the True first iteration 确保只在第一次实际验证迭代时设置初始验证损失
@@ -596,5 +502,3 @@ class PredictLightningModule(LightningModule):
 
     def _get_name(self):
         return self.model
-
-# %%

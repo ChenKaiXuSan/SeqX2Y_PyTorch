@@ -11,32 +11,31 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: 2023-08-15 04:38:48
-Modified By: chenkaixu
+Last Modified: Monday November 20th 2023 4:49:26 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
+
+10-01-2024	Kaixu Chen clean the code.
 2023-11-20 Chen change the tensorboard logger save path.
 
 '''
 
 # %%
-import os
-import warnings
-import logging
-import pytorch_lightning
+import os, warnings, logging
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning import loggers as pl_loggers
+
 # callbacks
-from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping, lr_monitor
+from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, ModelCheckpoint, lr_monitor
 from pl_bolts.callbacks import PrintTableMetricsCallback, TrainingDataMonitor
 # from utils.utils import get_ckpt_path
 
 from dataloader.data_loader import CTDataModule
 from train import PredictLightningModule
 
-from argparse import ArgumentParser
 import hydra
 from omegaconf import DictConfig
 
@@ -73,13 +72,6 @@ def train(hparams: DictConfig):
         save_top_k=3,
     )
 
-    # define the early stop.
-    early_stopping = EarlyStopping(
-        monitor='val_loss',
-        patience=5,
-        mode='min',
-    )
-
     # bolts callbacks
     table_metrics_callback = PrintTableMetricsCallback()
     monitor = TrainingDataMonitor(log_every_n_steps=1)
@@ -90,19 +82,11 @@ def train(hparams: DictConfig):
         max_epochs=hparams.train.max_epochs,
         logger=tb_logger,
         check_val_every_n_epoch=1,
-        # callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-        #             monitor, model_check_point, lr_logger],
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
                    model_check_point, lr_logger], # 去掉monitor
     )
 
     trainer.fit(ConvLSTMmodel, data_module)
-
-    # Acc_list = trainer.validate(classification_module, data_module, ckpt_path='best')
-
-    # return the best acc score.
-    # return model_check_point.best_model_score.item()
-
 
 # %%
 if __name__ == '__main__':
