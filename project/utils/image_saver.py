@@ -1,3 +1,27 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+'''
+File: /workspace/SeqX2Y_PyTorch/project/image_saver.py
+Project: /workspace/SeqX2Y_PyTorch/project
+Created Date: Saturday December 23rd 2023
+Author: Hao OuYang
+-----
+Comment:
+
+Have a good code time :)
+-----
+Last Modified: Saturday December 23rd 2023 1:54:48 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+-----
+Copyright (c) 2024 The University of Tsukuba
+-----
+HISTORY:
+Date      	By	Comments
+----------	---	---------------------------------------------------------
+
+11-01-2024	Hao OuYang	
+'''
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,7 +48,7 @@ def save_sitk_images(bat_pred, batch_idx, savepath):
     BAT_PRED = bat_pred.cpu().detach().numpy()  # Convert to numpy array once and use it
     BAT_PRED = np.squeeze(BAT_PRED)
     writer = sitk.ImageFileWriter()
-    for i in range(4):  # Assuming 3 phases as in your example
+    for i in range(3):  # Assuming 3 phases as in your example
         img_array = np.squeeze(BAT_PRED[i, ...])
         writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"inhale{i+1}_predict.nrrd"))
         writer.Execute(sitk.GetImageFromArray(img_array))
@@ -45,7 +69,7 @@ def save_sitk_DVF_images(DVF, batch_idx, savepath):
     Dvf = DVF.cpu().detach().numpy()  # Convert to numpy array
     Dvf = np.squeeze(Dvf)  # Remove singleton dimensions
     
-    for i in range(4):  # Assuming 3 phases as in your example
+    for i in range(3):  # Assuming 3 phases as in your example
         DVF_img = dvf_(Dvf[:, i, ...])
         writer = sitk.ImageFileWriter()
         writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"DVF{i+1}.nrrd"))

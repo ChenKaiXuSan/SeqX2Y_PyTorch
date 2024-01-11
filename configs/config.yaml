@@ -21,7 +21,7 @@ train:
   log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
   max_epochs: 100
   gpu_num: 1 # [0, 1]
-  seq: 4 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
+  seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
 
   vol: 118
 
