@@ -21,6 +21,8 @@ Date 	By 	Comments
 10-01-2024	Kaixu Chen clean the code.
 2023-11-20 Chen change the tensorboard logger save path.
 
+This is Local version
+
 '''
 
 # %%
