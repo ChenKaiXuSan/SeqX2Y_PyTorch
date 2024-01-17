@@ -180,7 +180,7 @@ def calculate_train_loss(bat_pred, DVF, ct_data, seq):
 
     # chen orign 
     # for phase in range(self.seq):
-    for phase in range(seq):
+    for phase in range(seq): #seq-1
         phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
         phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], ct_data[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
         #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128])

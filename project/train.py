@@ -55,7 +55,9 @@ class PredictLightningModule(LightningModule):
             # nf=96, in_chan=1, size1=30, size2=176, size3=140)
             #  nf=96, in_chan=1, size1=70, size2=120, size3=140)
             # ! FIXME  # input4 output4 93 max
-            nf = 96, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size) 
+            nf = 120, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size) 
+            # ! FIXME 为什么108和120消耗的GPU一样？但是在108到120之间的消耗又少？
+            # seq=3,98:21.58, 100:21.95, 102:22.43, 104:22.73, 106:23.17, 108:23.57, 109:22.43, 110:22.57, 112:22.91, 114:23.35, 116:22.83, 118:23.36, 120:23.58
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
 
         # save the hyperparameters to the file and ckpt

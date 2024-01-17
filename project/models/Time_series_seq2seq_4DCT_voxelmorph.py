@@ -11,7 +11,7 @@ Comment:
 Have a good code time :)
 -----
 Last Modified: Tuesday January 9th 2024 9:14:29 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----
@@ -39,19 +39,33 @@ class Encoder3DCNN(nn.Module):
         
         self.conv2 = nn.Conv3d(64, 128, kernel_size=3, padding=1)
         self.relu2 = nn.ReLU(inplace=True)
-        
-        self.conv3 = nn.Conv3d(128, out_channels, kernel_size=3, padding=1)
-        self.relu3 = nn.ReLU(inplace=True)
+        self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2))
 
-        self.pool = nn.MaxPool3d(kernel_size=2, stride=2)
+        self.conv3 = nn.Conv3d(128, 256, kernel_size=3, padding=1)
+        self.relu3 = nn.ReLU(inplace=True)
+        self.pool2 = nn.MaxPool3d(kernel_size=(2, 1, 1), stride=(2, 1, 1))
+
+        self.conv4 = nn.Conv3d(256, out_channels, kernel_size=1)  # Reduce channel depth to desired output
+        self.relu4 = nn.ReLU(inplace=True)
+        
+        # self.conv3 = nn.Conv3d(128, out_channels, kernel_size=3, padding=1)
+        # self.relu3 = nn.ReLU(inplace=True)
+
+        # self.pool = nn.MaxPool3d(kernel_size=2, stride=2)
     
     def forward(self, x):
         x = self.relu1(self.conv1(x))
         x = self.relu2(self.conv2(x))
+        x = self.pool1(x)
         x = self.relu3(self.conv3(x))
-        x = self.pool(x)
+        x = self.pool2(x)
+        x = self.relu4(self.conv4(x))
+        # x = self.relu1(self.conv1(x))
+        # x = self.relu2(self.conv2(x))
+        # x = self.relu3(self.conv3(x))
+        # x = self.pool(x)
 
-        return x
+        return x # torch.Size([1, 96, 1, 64, 64])
 
 class EncoderDecoderConvLSTM(nn.Module):
     def __init__(self, nf, in_chan, size1, size2, size3):
@@ -112,10 +126,13 @@ class EncoderDecoderConvLSTM(nn.Module):
 
         latent = []
         
-        for t in range(seq_len): # test_LUNA.py used this
+        # for t in range(seq_len): # test_LUNA.py used this
+        # for t in range(seq_len-1, 0, -1): # 这个循环将从 seq_len-1 开始，逐步递减，直到但不包括0。例如，如果 seq_len 是5，则循环将遍历以下序列：4, 3, 2, 1
+        for t in range(seq_len-1, -1, -1):
 
             # 应用3D CNN encoder
-            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...]) 
+            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...])  # batch_2D torch.Size([1, 3, 3, 128, 128])
+            # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, 1:, ...]) 
 
             h_t1 = self.encoder1_conv(x[:,t,...])
             down1 = self.down1(h_t1)
@@ -130,10 +147,13 @@ class EncoderDecoderConvLSTM(nn.Module):
 
             # fuse the 4DCT feature and time series feature, for encoder
             encoder_vector = h_t5 @ time_series_fat
+            # encoder_vector = h_t5 + time_series_fat
+            encoder_vector = h_t5
 
-        for t in range(future_step):
+        for t in range(future_step): # 这里不用改成future_step-1
 
             time_series_fat = self.encoder3d_cnn(batch_2D[:, :, 1:, ...])
+            # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :, ...])
 
             h_t6, c_t6 = self.ConvLSTM3d3(input_tensor=encoder_vector,
                                    cur_state=[h_t6, c_t6])
@@ -145,6 +165,8 @@ class EncoderDecoderConvLSTM(nn.Module):
 
             # fuse the 4DCT feature and time series feature, for decoder
             decoder_vector = h_t7 @ time_series_fat
+            # decoder_vector = h_t7 + time_series_fat
+            decoder_vector = h_t7
 
             latent += [decoder_vector]
             # 了解到 h_t7 是一个形状为 torch.Size([1, 96, 35, 60, 70]) 的张量后，这行代码 latent += [h_t7] 的操作意味着将这个五维张量作为一个元素添加到名为 latent 的列表中。在这个上下文中，latent 可能被用来收集一系列的张量，每个张量可能代表不同时间步的潜在表示或特征图。通过这种方式，可以在列表中追踪并存储多个时间步的状态。
