@@ -11,8 +11,8 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: 2023-08-15 04:38:48
-Modified By: chenkaixu
+Last Modified: Wednesday January 17th 2024 6:56:26 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -29,7 +29,7 @@ import pytorch_lightning
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning import loggers as pl_loggers
 # callbacks
-from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, RichProgressBar, ModelCheckpoint, EarlyStopping, lr_monitor
 from pl_bolts.callbacks import PrintTableMetricsCallback, TrainingDataMonitor
 # from utils.utils import get_ckpt_path
 
@@ -56,6 +56,8 @@ def train(hparams: DictConfig):
     # for the tensorboard
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=hparams.train.log_path, 
                                             name= "tensorboard_logs")
+
+    lr_logger = lr_monitor.LearningRateMonitor(logging_interval='step')
 
     # some callbacks
     progress_bar = TQDMProgressBar(refresh_rate=100)
@@ -88,8 +90,10 @@ def train(hparams: DictConfig):
         max_epochs=hparams.train.max_epochs,
         logger=tb_logger,
         check_val_every_n_epoch=1,
+        # callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
+        #             monitor, model_check_point, lr_logger],
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-                   monitor, model_check_point,],
+                   model_check_point, lr_logger], # 去掉monitor
     )
 
     trainer.fit(ConvLSTMmodel, data_module)

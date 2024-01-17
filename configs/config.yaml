@@ -9,6 +9,7 @@ test:
   mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
   rpm: '/workspace/SeqX2Y_PyTorch/test/public_data/rpm_max.csv'
   ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
+  # ckpt: '/workspace/SeqX2Y_PyTorch/logs/2023-12-09crossval/06-28-15/tensorboard_logs/version_0/checkpoints/epoch=84-val_loss=0.40.ckpt'
   log_path: '/workspace/SeqX2Y_PyTorch/logs/test_results/'
 
 # train configs
@@ -19,11 +20,53 @@ train:
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
   log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
   max_epochs: 100
-  gpu_num: 0 # [0, 1]
-  seq: 3 #4 # predict sequence for one patient. large num will occur OOM.
-  vol: 128
+  gpu_num: 1 # [0, 1]
+  seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
+
+  vol: 118
 
 # group by defaults
 defaults:
   - optimizer: adam
   - data: 4DCT
+
+# seq修改后，还需要修改
+
+# training_step中的 for phase in range(self.seq-1):
+
+# test_x_rpm = np.random.rand(1, 6) # patient index, seq
+# test_y_rpm = np.random.rand(1, 6) 
+
+# writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale5_predict.nrrd")
+# writer.Execute(sitk.GetImageFromArray(pI5))
+# writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale6_predict.nrrd")
+# writer.Execute(sitk.GetImageFromArray(pI6))
+# writer.SetFileName(savepath + "/" + "%3.3d" % batch_idx + "/" + "inhale7_predict.nrrd")
+# writer.Execute(sitk.GetImageFromArray(pI7))
+
+
+# hydra中hparams解释
+# main.py中的以下代码，Hydra将会从指定的目录中加载配置文件了
+# @hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+# def train(hparams: DictConfig):
+
+# Hydra 允许您将多个配置文件合并为一个结构化的配置对象。在您的情况下，如果/workspace/SeqX2Y_PyTorch/configs目录下有多个 .yaml 文件并且您希望它们的内容在 train 函数中可用，您需要确保：
+# 配置文件组织：所有需要的配置文件都放在 config_path 指定的目录中。
+# 配置文件合并：Hydra 支持通过组合来自不同文件的配置。这可以通过在主配置文件（例如 config.yaml）中引用其他配置文件来实现。
+# 例如，如果您有以下配置文件：
+# /workspace/SeqX2Y_PyTorch/configs/data/4DCT.yaml
+# /workspace/SeqX2Y_PyTorch/configs/optimizer/adam.yaml
+# /workspace/SeqX2Y_PyTorch/configs/config.yaml
+# 您的主配置文件 config.yaml 可能看起来像这样：
+# defaults:
+#   - data: 4DCT
+#   - optimizer: adam
+# 这里的 defaults 列表告诉 Hydra 要加载 data/4DCT.yaml 和 optimizer/adam.yaml 文件的内容，并将它们与 config.yaml 的内容合并。
+# 当您这样组织配置文件时，hparams 将自动包含所有合并后的配置项，并且您可以在 train 函数中按照层次结构访问这些配置项：
+
+# self.img_size = hparams.data.img_size
+# self.lr = hparams.optimizer.lr
+# self.seq = hparams.train.seq
+# self.vol = hparams.train.vol
+
+# 确保每个配置文件中的键（如 img_size, lr, seq, vol）在它们所在的域（如 data, optimizer, train）中是唯一的，并且与您在代码中引用它们的方式相匹配。Hydra 会处理这些文件之间的层次关系和合并细节，为您提供一个统一的配置对象。
