@@ -55,7 +55,7 @@ class PredictLightningModule(LightningModule):
             # nf=96, in_chan=1, size1=30, size2=176, size3=140)
             #  nf=96, in_chan=1, size1=70, size2=120, size3=140)
             # ! FIXME
-            nf = 96, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size)
+            nf = 96, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size) #88
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
 
         # TODO you should generate rpm.csv file by yourself.
@@ -261,8 +261,8 @@ class PredictLightningModule(LightningModule):
         # train_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
         # chen orign 
-        # for phase in range(self.seq):
-        for phase in range(self.seq-1):
+        for phase in range(self.seq):
+        # for phase in range(self.seq-1):
             phase_mse_loss_list.append(F.mse_loss(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))   # DVF torch.Size([1, 3, 3, 70, 120, 140])
             phase_smooth_l1_loss_list.append(F.smooth_l1_loss(DVF[:,:,phase,...], batch[:, phase, ...].expand_as(DVF[:,:,phase,...]))) # DVF[:,:,phase,...] torch.Size([1, 3, 70, 120, 140])          
             #!FIXME Metrics Test But Erro ValueError: Expected both prediction and target to be 1D or 2D tensors, but received tensors with dimension torch.Size([1, 1, 118, 128, 128])
