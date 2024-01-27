@@ -19,8 +19,8 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 10th 2024 8:41:51 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Last Modified: Wednesday January 17th 2024 9:50:54 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----

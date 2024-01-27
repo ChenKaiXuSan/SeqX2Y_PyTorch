@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Tuesday January 9th 2024 9:14:29 am
+Last Modified: Wednesday January 17th 2024 9:50:54 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -127,12 +127,12 @@ class EncoderDecoderConvLSTM(nn.Module):
         latent = []
         
         # for t in range(seq_len): # test_LUNA.py used this
-        # for t in range(seq_len-1, 0, -1): # 这个循环将从 seq_len-1 开始，逐步递减，直到但不包括0。例如，如果 seq_len 是5，则循环将遍历以下序列：4, 3, 2, 1
-        for t in range(seq_len-1, -1, -1):
+        # for t in range(seq_len-1, 0, -1): # In4 Out3 use This 这个循环将从 seq_len-1 开始，逐步递减，直到但不包括0。例如，如果 seq_len 是5，则循环将遍历以下序列：4, 3, 2, 1
+        for t in range(seq_len-1, -1, -1): # In3 Out3 use This
 
             # 应用3D CNN encoder
             time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...])  # batch_2D torch.Size([1, 3, 3, 128, 128])
-            # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, 1:, ...]) 
+            # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :, ...]) 
 
             h_t1 = self.encoder1_conv(x[:,t,...])
             down1 = self.down1(h_t1)

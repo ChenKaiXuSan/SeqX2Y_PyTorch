@@ -10,8 +10,8 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Monday November 20th 2023 4:49:26 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Last Modified: Wednesday January 17th 2024 9:50:54 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -94,12 +94,13 @@ class CT_normalize(torch.nn.Module):
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
 
         # half_img_size = self.img_size // 2 
-        # center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
-        center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
+        center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
+        # center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
         bias = 180
 
         # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
         # croped_img = crop(image, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
+        # croped_img = image[:, center_loc-210:center_loc+150, center_loc-175:center_loc+175] #！undo normalized (handle croped)
         croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] #！undo normalized (handle croped)
         # croped_img = normalized_img[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] # do normalized (handle croped)
 
