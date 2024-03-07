@@ -154,6 +154,7 @@ class PredictLightningModule(LightningModule):
 
         # unpack the batch
         ct_data = batch['4DCT']
+        save_sitk_images(ct_data, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult/GT') # Save the croped GT images
         time_series_img = batch['2D_time_series']
 
         b, seq, c, vol, h, w = ct_data.size()

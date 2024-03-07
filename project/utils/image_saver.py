@@ -58,11 +58,11 @@ def save_sitk_DVF_images(DVF, batch_idx, savepath):
     # Permute DVF & Save DVF
     def dvf_(d):
         x = d[0,...]
-        x = np.reshape(x, [1,118, 128, 128])
+        x = np.reshape(x, [1,128, 128, 128])
         y = d[1,...]
-        y = np.reshape(y, [1,118, 128, 128])
+        y = np.reshape(y, [1,128, 128, 128])
         z = d[2,...]
-        z = np.reshape(z, [1,118, 128, 128])
+        z = np.reshape(z, [1,128, 128, 128])
         out = np.concatenate([z,y,x],0)
         return out
     

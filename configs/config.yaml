@@ -20,11 +20,11 @@ train:
   batch_size: 1 # same as paper 
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
   log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
-  max_epochs: 100
+  max_epochs: 200
   gpu_num: 1 # [0, 1]
   seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
 
-  vol: 118
+  vol: 128
 
 # group by defaults
 defaults:
