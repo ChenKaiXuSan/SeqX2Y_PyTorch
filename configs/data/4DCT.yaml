@@ -1,9 +1,9 @@
 # 4DCT
 # data_path: "/workspace/data/4DCT-Dicom-copy2/" # help='meta dataset path'
-data_path: "/workspace/data/135/POPI_seq3_135" #"/workspace/data/POPI_seq3_dataset_copy" #"/workspace/data/POPI_seq3_123" # "/workspace/data/POPI_seq3_dataset"
-val_data_path: "/workspace/data/135/POPI_valseq3_135" #"/workspace/data/POPI_valdata3_copy" #"/workspace/data/POPI_valseq3_123" # "/workspace/data/POPI_valdata3"
+data_path: "/workspace/data/579/POPI_seq3_579" #"/workspace/data/POPI_seq3_dataset_copy" #"/workspace/data/POPI_seq3_123" # "/workspace/data/POPI_seq3_dataset"
+val_data_path: "/workspace/data/579/POPI_valseq3_579" #"/workspace/data/POPI_valdata3_copy" #"/workspace/data/POPI_valseq3_123" # "/workspace/data/POPI_valdata3"
 num_workers: 0
 img_size: 128 # 128 # 224
 
-data_path2D: "/workspace/data/135/POPI_seq3_2D_135" #"/workspace/data/POPI_seq3_2D_dataset_copy" #"/workspace/data/POPI_seq3_2D_123" # "/workspace/data/POPI_seq3_2D_dataset"
-val_data_path2D: "/workspace/data/135/POPI_valseq3_2D_135" #"/workspace/data/POPI_val2D_seq3_copy" #"/workspace/data/POPI_valseq3_2D_123" # "/workspace/data/POPI_val2D_seq3"
+data_path2D: "/workspace/data/579/POPI_seq3_2D_579" #"/workspace/data/POPI_seq3_2D_dataset_copy" #"/workspace/data/POPI_seq3_2D_123" # "/workspace/data/POPI_seq3_2D_dataset"
+val_data_path2D: "/workspace/data/579/POPI_valseq3_2D_579" #"/workspace/data/POPI_val2D_seq3_copy" #"/workspace/data/POPI_valseq3_2D_123" # "/workspace/data/POPI_val2D_seq3"

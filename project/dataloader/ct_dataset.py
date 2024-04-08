@@ -191,7 +191,7 @@ class CTDataset(Dataset):
                         torch.from_numpy(image_array).to(torch.float32))
                 one_breath_img.append(image_array)
                 # choose start slice to put into the one_breath_img
-                if len(one_breath_img) > 10:
+                if len(one_breath_img) > 10: # 0219crossval use 20 v=118, 0303use 10 v=128
                     choose_slice_one_breath_img.append(image_array)
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
                 # ! or should unifrom extract 128 from all vol, not from start to index.

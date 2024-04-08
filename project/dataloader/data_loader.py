@@ -97,14 +97,14 @@ class CT_normalize(torch.nn.Module):
         # half_img_size = self.img_size // 2 
         center_height = image.shape[1] // 2 #！undo normalized (handle croped)
         center_width = image.shape[2] // 2
-        # center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
+        center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
         bias = 180
 
         # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
         # croped_img = crop(image, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
         # croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] #！org undo normalized (handle croped)
-        # croped_img = image[:, center_loc-210:center_loc+150, center_loc-175:center_loc+175] #！org 2 undo normalized (handle croped)
-        croped_img = image[:, center_height-190:center_height+130, center_width-160:center_width+160] #! org 3 This is the best
+        # croped_img = image[:, center_loc-210:center_loc+150, center_loc-175:center_loc+175] #！org 2 undo normalized, 02-19crossval use this
+        croped_img = image[:, center_height-190:center_height+130, center_width-160:center_width+160] #! org 3 This is the best, 03-03crossval use this
         # cropped_img = image[:, top:bottom, left:right]
         # croped_img = normalized_img[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] # do normalized (handle croped)
 
