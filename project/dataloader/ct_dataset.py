@@ -19,7 +19,7 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
+Last Modified: Thursday April 18th 2024 3:34:16 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -43,7 +43,7 @@ import numpy as np
 
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, data_path2D, ct_transform=None, time_series_transform=None, vol=118):
+    def __init__(self, data_path, data_path2D, ct_transform=None, time_series_transform=None, vol=128):
         """init the params for the CTDataset.
 
         Args:
