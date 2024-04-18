@@ -19,8 +19,8 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 10th 2024 8:41:51 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Last Modified: Thursday April 18th 2024 3:34:16 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----
@@ -43,7 +43,7 @@ import numpy as np
 
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, data_path2D, ct_transform=None, time_series_transform=None, vol=118):
+    def __init__(self, data_path, data_path2D, ct_transform=None, time_series_transform=None, vol=128):
         """init the params for the CTDataset.
 
         Args:
@@ -131,6 +131,31 @@ class CTDataset(Dataset):
 
         return person_number
 
+    def save_normalize_GT_images(self, final_images, idx):
+        """
+        累积处理的图像并保存为CT图像格式, 注:目前不用此方法了, 直接在train.py中ct_data处进行保存更好  
+        Args:
+            final_images (List[torch.Tensor]): 处理后的图像列表，每个图像形状为[1, 128, 128]
+            而final_images形状应为[self.vol,128,128]
+        """
+        # 将图像沿第0维合并
+        combined_img = torch.cat(final_images, dim=0)  # combined_img尺寸为[128, 128, 128]
+        # 将PyTorch Tensor转换为NumPy数组
+        combined_img_np = combined_img.numpy()
+        # 使用SimpleITK将NumPy数组转换为SimpleITK的Image对象
+        combined_img_sitk = sitk.GetImageFromArray(combined_img_np)
+        # 假设combined_img_sitk是一个SimpleITK的Image对象，它是从浮点数数据创建的，你需要先将它转换为NumPy数组进行处理
+        combined_img_np = sitk.GetArrayFromImage(combined_img_sitk)
+        # 将浮点数数据标准化到特定的范围，例如0到255，然后转换为整数（如uint8），这里假设combined_img_np的数据范围是-1到1
+        normalized_img = ((combined_img_np - combined_img_np.min()) / (combined_img_np.max() - combined_img_np.min()) * 255).astype(np.uint8)
+        # 将处理后的NumPy数组转换回SimpleITK的Image对象
+        processed_img_sitk = sitk.GetImageFromArray(normalized_img)
+        # 保存为CT图像
+        # writer = sitk.ImageFileWriter()
+        # writer.SetFileName(os.path.join("/workspace/SeqX2Y_PyTorch/test/Imageresult/GT", f"{idx}GT_normalize.dcm"))
+        # writer.Execute(sitk.GetImageFromArray(final_images))
+        sitk.WriteImage(processed_img_sitk, f"/workspace/SeqX2Y_PyTorch/test/Imageresult/GT/GT_normalize_{idx}.nrrd") # 或者改成.dcm也可以保存
+
     def __getitem__(self, idx):
         """
         __getitem__, get the patient data from the patient_Dict.
@@ -166,13 +191,14 @@ class CTDataset(Dataset):
                         torch.from_numpy(image_array).to(torch.float32))
                 one_breath_img.append(image_array)
                 # choose start slice to put into the one_breath_img
-                if len(one_breath_img) > 20:
+                if len(one_breath_img) > 10: # 0219crossval use 20 v=118, 0303use 10 v=128
                     choose_slice_one_breath_img.append(image_array)
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
                 # ! or should unifrom extract 128 from all vol, not from start to index.
                 # if len(one_breath_img) == self.vol:
                 #     break;
                 if len(choose_slice_one_breath_img) == self.vol:
+                    # self.save_normalize_GT_images(choose_slice_one_breath_img,idx) # save the GT images
                     break
             # c, h, w
             # one_patient_full_vol.append(torch.stack(one_breath_img, dim=1)) # c, v, h, w

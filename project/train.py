@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Sunday December 10th 2023 6:34:49 am
+Last Modified: Wednesday January 17th 2024 9:50:54 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -56,6 +56,8 @@ class PredictLightningModule(LightningModule):
             #  nf=96, in_chan=1, size1=70, size2=120, size3=140)
             # ! FIXME  # input4 output4 93 max
             nf = 96, in_chan=1, size1=self.vol, size2=self.img_size, size3=self.img_size) 
+            # ! FIXME 为什么108和120消耗的GPU一样？但是在108到120之间的消耗又少？
+            # seq=3,98:21.58, 100:21.95, 102:22.43, 104:22.73, 106:23.17, 108:23.57, 109:22.43, 110:22.57, 112:22.91, 114:23.35, 116:22.83, 118:23.36, 120:23.58
             # nf=96, in_chan=1, size1=30, size2=256, size3=256)
 
         # save the hyperparameters to the file and ckpt
@@ -152,6 +154,7 @@ class PredictLightningModule(LightningModule):
 
         # unpack the batch
         ct_data = batch['4DCT']
+        save_sitk_images(ct_data, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult/GT') # Save the croped GT images
         time_series_img = batch['2D_time_series']
 
         b, seq, c, vol, h, w = ct_data.size()
