@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 7:01:42 am
+Last Modified: Thursday April 18th 2024 3:08:39 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -55,11 +55,11 @@ def save_sitk_DVF_images(DVF, batch_idx, savepath):
     # Permute DVF & Save DVF
     def dvf_(d):
         x = d[0,...]
-        x = np.reshape(x, [1,118, 128, 128])
+        x = np.reshape(x, [1,128, 128, 128])
         y = d[1,...]
-        y = np.reshape(y, [1,118, 128, 128])
+        y = np.reshape(y, [1,128, 128, 128])
         z = d[2,...]
-        z = np.reshape(z, [1,118, 128, 128])
+        z = np.reshape(z, [1,128, 128, 128])
         out = np.concatenate([z,y,x],0)
         return out
     

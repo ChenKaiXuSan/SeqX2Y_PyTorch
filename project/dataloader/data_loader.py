@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 6:56:26 am
+Last Modified: Thursday April 18th 2024 3:08:39 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -93,22 +93,23 @@ class CT_normalize(torch.nn.Module):
         # normd_cropd_img = normalized_img[:, self.y1:self.y2, self.x1:self.x2]
         # cropd_img = image[:, self.y1:self.y2, self.x1:self.x2]
 
-        # half_img_size = self.img_size // 2 
-        # center_loc = image.shape[1] // 2 #！undo normalized (handle croped)
+        # half_img_size = self.img_size // 2  
+        center_height = image.shape[1] // 2 #！undo normalized (handle croped)
+        center_width = image.shape[2] // 2
         center_loc = normalized_img.shape[1] // 2 # do normalized (handle croped)
         bias = 180
 
         # croped_img = crop(normalized_img, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
         # croped_img = crop(image, top=center_loc-bias, left=center_loc-bias, height=bias*2, width=bias*2)
-        croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] #！undo normalized (handle croped)
-        # croped_img = normalized_img[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] # do normalized (handle croped)
+        ## croped_img = image[:, center_loc-180:center_loc+130, center_loc-155:center_loc+155] #！org undo normalized (handle croped)
+        croped_img = image[:, center_height-190:center_height+130, center_width-160:center_width+160] #! org 3 This is the best, 03-03crossval use this
 
         final_img = resize(croped_img, size=[self.img_size, self.img_size])
 
         return final_img
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, transform=None, vol=118):
+    def __init__(self, data_path, transform=None, vol=128):
         """init the params for the CTDataset.
 
         Args:
@@ -203,7 +204,8 @@ class CTDataset(Dataset):
                     image_array = self.transform(torch.from_numpy(image_array).to(torch.float32))
                 one_breath_img.append(image_array)
                 # choose start slice to put into the one_breath_img
-                if len(one_breath_img) > 20:
+                # if len(one_breath_img) > 20: # org is > 20
+                if len(one_breath_img) > 10:  # new 统一
                     choose_slice_one_breath_img.append(image_array)
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
                 # ! or should unifrom extract 128 from all vol, not from start to index.
