@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 6:56:26 am
+Last Modified: Thursday April 18th 2024 4:50:52 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -197,55 +197,79 @@ class PredictLightningModule(LightningModule):
         Returns: None
         '''
 
+#------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
-        # batch.shape = b, seq, c, vol, h, w
-        # save batch img
-        # Batch=batch[0,0,0,...]
-        # # dvf=dvf.permute(1,2,0)
-        # Batch=Batch.cpu().detach().numpy()
-        # plt.imshow(Batch)
-        # plt.show()
-        # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Batch.png')
-
-        rpm = int(np.random.randint(0, 20, 1))
-        #! RPM Bug logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
-        # logging.info("Patient index: %s" % (batch_idx))
-
-        RPM = np.array(self.data)
+        # Reading RPM #
+        with open('/workspace/data/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+            data = list(csv.reader(f, delimiter=","))        
+        RPM = np.array(data)
         RPM = np.float32(RPM)
-        test_RPM = RPM
 
-        # load rpm
-        # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
-        # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
-        # test_y_rpm = np.expand_dims(test_y_rpm,0)
+        # select_seq = RPM[:5, [1, 3, 5, 7]]
+        # RPM_X = select_seq[:, :-1]
+        # RPM_Y = select_seq[:, 1:]
+        select_seq = RPM[:5, [1, 3, 5]]
+        RPM_X = select_seq[:, :]
+        RPM_Y = select_seq[:, :]
 
-        # TODO you should fix this, mapping with your data.
-        # ! fake data 
-        test_x_rpm = np.random.rand(1, 7) # patient index, seq
-        test_y_rpm = np.random.rand(1, 7) # same to the seq
-        # test_x_rpm *= 10
-        # test_y_rpm *= 10
+        RPM_X_tensor = torch.Tensor(RPM_X)
+        RPM_Y_tensor = torch.Tensor(RPM_Y)
+        RPM_X_tensor.cuda()
+        RPM_Y_tensor.cuda()
 
-        # invol = torch.Tensor(test_x_)
-        # invol = invol.permute(0, 1, 5, 2, 3, 4)
-        # invol = invol.to(device)
-        # invol = batch.unsqueeze(dim=2)  # b, seq, c, vol, h, w
         invol = batch.clone().detach()
+        bat_pred, DVF = self.model(invol, rpm_x=RPM_X_tensor, rpm_y=RPM_Y_tensor, future_seq=self.seq) 
 
-        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
-        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
-        test_x_rpm_tensor.cuda()
-        test_y_rpm_tensor.cuda()
+#-----------------org No 2d timeseries---------------------------
+        # b, seq, c, vol, h, w = batch.size()
+        #     # batch.shape = b, seq, c, vol, h, w
+        #     # save batch img
+        #     # Batch=batch[0,0,0,...]
+        #     # # dvf=dvf.permute(1,2,0)
+        #     # Batch=Batch.cpu().detach().numpy()
+        #     # plt.imshow(Batch)
+        #     # plt.show()
+        #     # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/Batch.png')
 
-        # pred the video frames
-        # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
-        # rpm_x: 1, 1
-        # rpm_y: 1, 9
+        #     #! RPM Bug logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
+        #     # logging.info("Patient index: %s" % (batch_idx))
+        # rpm = int(np.random.randint(0, 20, 1))
 
-        bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq) 
+        # RPM = np.array(self.data)
+        # RPM = np.float32(RPM)
+        # test_RPM = RPM
+
+        #     # load rpm
+        #     # test_rpm_ = test_RPM[rpm,:]
+        #     # test_x_rpm = test_RPM[rpm,:1]
+        #     # test_x_rpm = np.expand_dims(test_x_rpm,0)
+        #     # test_y_rpm = test_RPM[rpm,0:]
+        #     # test_y_rpm = np.expand_dims(test_y_rpm,0)
+
+        # # TODO you should fix this, mapping with your data.
+        # # ! fake data 
+        # test_x_rpm = np.random.rand(1, 7) # patient index, seq
+        # test_y_rpm = np.random.rand(1, 7) # same to the seq
+        #     # test_x_rpm *= 10
+        #     # test_y_rpm *= 10
+
+        #     # invol = torch.Tensor(test_x_)
+        #     # invol = invol.permute(0, 1, 5, 2, 3, 4)
+        #     # invol = invol.to(device)
+        #     # invol = batch.unsqueeze(dim=2)  # b, seq, c, vol, h, w
+        # invol = batch.clone().detach()
+
+        # test_x_rpm_tensor = torch.Tensor(test_x_rpm)
+        # test_y_rpm_tensor = torch.Tensor(test_y_rpm)
+        # test_x_rpm_tensor.cuda()
+        # test_y_rpm_tensor.cuda()
+
+        #     # pred the video frames
+        #     # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
+        #     # rpm_x: 1, 1
+        #     # rpm_y: 1, 9
+        # bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq) 
+#-----------------org No 2d timeseries---------------------------
 
         # Calc Loss 
         phase_mse_loss_list = []
@@ -341,52 +365,77 @@ class PredictLightningModule(LightningModule):
 
         Returns: None
         '''
+
+#------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
-
-        rpm = int(np.random.randint(0, 20, 1))
-        # logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
-        # logging.info("Patient index: %s" % (batch_idx))
-
-        RPM = np.array(self.data)
+        # Reading RPM #
+        with open('/workspace/data/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+            data = list(csv.reader(f, delimiter=","))        
+        RPM = np.array(data)
         RPM = np.float32(RPM)
-        test_RPM = RPM
-
-        # ! TODO you should fix this, mapping with your data.
-        # load rpm
-        # test_rpm_ = test_RPM[rpm,:]
-        # test_x_rpm = test_RPM[rpm,:1]
-        # test_x_rpm = np.expand_dims(test_x_rpm,0)
-        # test_y_rpm = test_RPM[rpm,0:]
-        # test_y_rpm = np.expand_dims(test_y_rpm,0)
-
-        # ! fake data
-        # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
-        # test_y_rpm = np.random.rand(1, 10)[0,1:]
-        test_x_rpm = np.random.rand(1, 7) #!patient index, seq
-        test_y_rpm = np.random.rand(1, 7) # same to the saeq
-        # test_x_rpm *= 10
-        # test_y_rpm *= 10
-
-        # invol = torch.Tensor(test_x_)
-        # invol = invol.permute(0, 1, 5, 2, 3, 4)
-        # invol = invol.to(device)
-        # invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
-        invol = batch.clone().detach()
         
-        # ! TODO you should decrease the seq_len, to reduce the memory usage.
-        # new_invol = batch[:, :self.seq, ...]
+        # When validation, use last patient (5)
+        select_seq = RPM[:, [1, 3, 5, 7]] 
+        RPM_X = select_seq[:, :-1]
+        RPM_Y = select_seq[:, 1:]
+        # select_seq = RPM[:5, [1, 3, 5]]
+        # RPM_X = select_seq[:, :]
+        # RPM_Y = select_seq[:, :]
 
-        test_x_rpm_tensor = torch.Tensor(test_x_rpm)
-        test_y_rpm_tensor = torch.Tensor(test_y_rpm)
-        test_x_rpm_tensor.cuda()
-        test_y_rpm_tensor.cuda()
+        RPM_X_tensor = torch.Tensor(RPM_X)
+        RPM_Y_tensor = torch.Tensor(RPM_Y)
+        RPM_X_tensor.cuda()
+        RPM_Y_tensor.cuda()
+
+        invol = batch.clone().detach()
+
+#-----------------org No 2d timeseries---------------------------        
+        # b, seq, c, vol, h, w = batch.size()
+        # rpm = int(np.random.randint(0, 20, 1))
+        #     # logging.info("Patient index: %s, RPM index: %s" % (batch_idx, rpm))
+        #     # logging.info("Patient index: %s" % (batch_idx))
+
+        # RPM = np.array(self.data)
+        # RPM = np.float32(RPM)
+        # test_RPM = RPM
+
+        #     # ! TODO you should fix this, mapping with your data.
+        #     # load rpm
+        #     # test_rpm_ = test_RPM[rpm,:]
+        #     # test_x_rpm = test_RPM[rpm,:1]
+        #     # test_x_rpm = np.expand_dims(test_x_rpm,0)
+        #     # test_y_rpm = test_RPM[rpm,0:]
+        #     # test_y_rpm = np.expand_dims(test_y_rpm,0)
+
+        #     # ! fake data
+        #     # test_x_rpm = np.random.rand(1, 10)[0,:9] # patient index, seq
+        #     # test_y_rpm = np.random.rand(1, 10)[0,1:]
+        # test_x_rpm = np.random.rand(1, 7) #!patient index, seq
+        # test_y_rpm = np.random.rand(1, 7) # same to the saeq
+        #     # test_x_rpm *= 10
+        #     # test_y_rpm *= 10
+
+        #     # invol = torch.Tensor(test_x_)
+        #     # invol = invol.permute(0, 1, 5, 2, 3, 4)
+        #     # invol = invol.to(device)
+        #     # invol = batch.unsqueeze(dim=2) # b, seq, c, vol, h, w
+        # invol = batch.clone().detach()
+        
+        #     # ! TODO you should decrease the seq_len, to reduce the memory usage.
+        #     # new_invol = batch[:, :self.seq, ...]
+
+        # test_x_rpm_tensor = torch.Tensor(test_x_rpm)
+        # test_y_rpm_tensor = torch.Tensor(test_y_rpm)
+        # test_x_rpm_tensor.cuda()
+        # test_y_rpm_tensor.cuda()
+#-----------------org No 2d timeseries---------------------------  
 
         # pred the video frames
         with torch.no_grad():
             # invol: 1, 9, 1, 128, 128, 128 # b, seq, c, vol, h, w
             # rpm_x: 1, 1
             # rpm_y: 1, 9
-            bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
+            bat_pred, DVF = self.model(invol, rpm_x=RPM_X_tensor, rpm_y=RPM_Y_tensor, future_seq=self.seq)  # [1,2,3,176,176]
             # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
 
         # Save images

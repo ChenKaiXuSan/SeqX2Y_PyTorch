@@ -1,6 +1,15 @@
 # 4DCT
 # data_path: "/workspace/data/4DCT-Dicom-copy2/" # help='meta dataset path'
-data_path: "/workspace/data/POPI_seq3_dataset"
-val_data_path: "/workspace/data/POPI_valdata3"
+
+#-------------No2D org-------------------------
+# data_path: "/workspace/data/POPI_seq3_dataset"
+# val_data_path: "/workspace/data/POPI_valdata3"
+#-------------No2D org-------------------------
+
+data_path: "/workspace/data/135/POPI_seq3_135"
+val_data_path: "/workspace/data/135/POPI_valseq3_135"
 num_workers: 8
 img_size: 128 # 128 # 224
+
+# 1d rpm
+rpm_data: "/workspace/data/Diagram_Coordinates/1D_rpm.csv"

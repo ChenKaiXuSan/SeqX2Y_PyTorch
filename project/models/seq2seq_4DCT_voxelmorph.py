@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 6:56:26 am
+Last Modified: Thursday April 18th 2024 4:50:52 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -96,10 +96,19 @@ class EncoderDecoderConvLSTM(nn.Module):
             h_t5, c_t5 = self.ConvLSTM3d2(input_tensor = h_t4, # c_t5 h_t5.shape=>[1,96,35,60,70]  input:(nf=96, in_chan=1, size1=70, size2=120, size3=140)
                                    cur_state = [h_t5,c_t5])
 
+#------------------nadeemlab ORG--注意：原本的No2D中不需要解开此代码------------------------
             # ! here, multiply the rpm and feature
             # h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t])) # from back to front
             # ！h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
             # simple multiplication between rpm and feature
+
+#------------------myself add 1d rpm 我自己的对比试验新增代码------------------------
+            # ! here, multiply the rpm and feature
+            h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t])) # from back to front
+            # ！h_t5 = torch.mul(h_t5,torch.squeeze(rpm_x[0,t-1]))
+            # simple multiplication between rpm and feature
+ #------------------myself add 1d rpm ------------------------
+                               
             encoder_vector = h_t5
 
 
@@ -110,7 +119,10 @@ class EncoderDecoderConvLSTM(nn.Module):
             
             h_t7, c_t7 = self.ConvLSTM3d4(input_tensor=h_t6, # c_t7 h_t7.shape=>[1,96,35,60,70]  input:(nf=96, in_chan=1, size1=70, size2=120, size3=140)
                                    cur_state=[h_t7, c_t7])
-            # ！h_t7 = torch.mul(h_t7, torch.squeeze(rpm_y[0,t]))
+            
+#------------------nadeemlab ORG--注意：原本的No2D中不需要解开此代码------------------------
+            h_t7 = torch.mul(h_t7, torch.squeeze(rpm_y[0,t]))
+#------------------nadeemlab ORG--注意：原本的No2D中不需要解开此代码------------------------
             # Simple multiplication between rpm and later phase features
             encoder_vector = h_t7
             latent += [h_t7]  # 了解到 h_t7 是一个形状为 torch.Size([1, 96, 35, 60, 70]) 的张量后，这行代码 latent += [h_t7] 的操作意味着将这个五维张量作为一个元素添加到名为 latent 的列表中。在这个上下文中，latent 可能被用来收集一系列的张量，每个张量可能代表不同时间步的潜在表示或特征图。通过这种方式，可以在列表中追踪并存储多个时间步的状态。
