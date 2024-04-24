@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Thursday April 18th 2024 4:50:52 am
+Last Modified: Tuesday April 23rd 2024 2:16:03 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -205,12 +205,12 @@ class PredictLightningModule(LightningModule):
         RPM = np.array(data)
         RPM = np.float32(RPM)
 
-        # select_seq = RPM[:5, [1, 3, 5, 7]]
-        # RPM_X = select_seq[:, :-1]
-        # RPM_Y = select_seq[:, 1:]
-        select_seq = RPM[:5, [1, 3, 5]]
-        RPM_X = select_seq[:, :]
-        RPM_Y = select_seq[:, :]
+        select_seq = RPM[:5, [2, 4, 6, 8]]
+        RPM_X = select_seq[:, :-1]
+        RPM_Y = select_seq[:, 1:]
+        # select_seq = RPM[:5, [1, 3, 5]]
+        # RPM_X = select_seq[:, :]
+        # RPM_Y = select_seq[:, :]
 
         RPM_X_tensor = torch.Tensor(RPM_X)
         RPM_Y_tensor = torch.Tensor(RPM_Y)
@@ -375,7 +375,7 @@ class PredictLightningModule(LightningModule):
         RPM = np.float32(RPM)
         
         # When validation, use last patient (5)
-        select_seq = RPM[:, [1, 3, 5, 7]] 
+        select_seq = RPM[:, [2, 4, 6, 8]] 
         RPM_X = select_seq[:, :-1]
         RPM_Y = select_seq[:, 1:]
         # select_seq = RPM[:5, [1, 3, 5]]
