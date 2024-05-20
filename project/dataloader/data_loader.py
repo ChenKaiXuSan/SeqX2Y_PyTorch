@@ -10,8 +10,8 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
-Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+Last Modified: Wednesday April 24th 2024 10:20:22 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -130,6 +130,9 @@ class CTDataModule(LightningDataModule):
 
         # 2D time series path
         self._TIME_SERIES_DATA_PATH = data.data_path2D
+        # 1D coordinate path
+        self._COORDINATE_DATA_PATH = data.data_path1D
+        
         self._VAL_TIME_SERIES_DATA_PATH = data.val_data_path2D
 
         # 4D CT transform
@@ -183,7 +186,7 @@ class CTDataModule(LightningDataModule):
         if stage in ("fit", None):
             self.train_dataset = CTDataset(
                 data_path=self._TRAIN_PATH,
-                data_path2D=self._TIME_SERIES_DATA_PATH,                
+                data_path1D=self._COORDINATE_DATA_PATH,
                 ct_transform=self.train_transform,
                 time_series_transform=self.train_transform_time_series,
                 vol=self.vol,
@@ -194,7 +197,7 @@ class CTDataModule(LightningDataModule):
         if stage in ("fit", "validate", None):
             self.val_dataset = CTDataset(
                 data_path=self._VAL_PATH,
-                data_path2D=self._VAL_TIME_SERIES_DATA_PATH,
+                data_path1D=self._COORDINATE_DATA_PATH,
                 ct_transform=self.val_transform,
                 time_series_transform=self.val_transform_time_series,
                 vol=self.vol,

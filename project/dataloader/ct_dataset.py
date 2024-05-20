@@ -19,8 +19,8 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Thursday April 18th 2024 3:34:16 am
-Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+Last Modified: Wednesday April 24th 2024 10:20:22 am
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----
@@ -30,6 +30,7 @@ Date      	By	Comments
 '''
 import os
 import sys
+import csv
 from pathlib import Path
 
 import torch
@@ -43,7 +44,7 @@ import numpy as np
 
 
 class CTDataset(Dataset):
-    def __init__(self, data_path, data_path2D, ct_transform=None, time_series_transform=None, vol=128):
+    def __init__(self, data_path, data_path1D, ct_transform=None, time_series_transform=None, vol=128):
         """init the params for the CTDataset.
 
         Args:
@@ -53,9 +54,15 @@ class CTDataset(Dataset):
         """
         self.vol = vol
 
+        # 1D coordinate time series
+        self.data_path1D = Path(data_path1D)
+        with open(self.data_path1D, 'r', encoding='utf-8-sig') as f:
+            self.time_series = list(csv.reader(f))
+
+        
+
         # 2D time series
-        self.data_path2D = Path(data_path2D)
-        self.time_image_List2D = self._load_samples()
+        # self.time_image_List2D = self._load_samples()
         self.time_image_transform = time_series_transform
 
         # CT
@@ -77,7 +84,7 @@ class CTDataset(Dataset):
                 sequence_images = sorted(sequence_folder.glob('*.png'))
                 samples.append(sequence_images)
         return samples
-
+    
     def load_person(self,):
         """prepare the patient data, and return a Dict.
         Load from a main path, like: /workspace/data/POPI_dataset
@@ -127,7 +134,10 @@ class CTDataset(Dataset):
         breath_number = len(self.all_patient_Dict[0])
         one_breath_number = len(self.all_patient_Dict[0][0])
         # 2D time series
-        person_number_2D = len(self.time_image_List2D)
+        # person_number_2D = len(self.time_image_List2D)
+
+        # 1D coordinate time series
+        person_number_1D = len(self.time_series)
 
         return person_number
 
@@ -173,8 +183,8 @@ class CTDataset(Dataset):
         one_patient_time_series = []
 
         # check shape of two dataset.
-        assert len(self.all_patient_Dict[idx]) == len(
-            self.time_image_List2D[idx]), "the shape of two dataset is not same."
+        # assert len(self.all_patient_Dict[idx]) == len(
+        #     self.time_series[idx]), "the shape of two dataset is not same."
 
         # * Step1: prepare the 4DCT data.
         for breath_path in self.all_patient_Dict[idx]:  # one patient path
@@ -206,22 +216,19 @@ class CTDataset(Dataset):
                 choose_slice_one_breath_img, dim=1))  # c, v, h, w
 
         # * Step2: prepare the 2D time series data.
-        for img_path in self.time_image_List2D[idx]:
+        # load coordinate time series data
+        part = str(breath_path[0]).split('/')[3]
+        part = [int(i) for i in part]
 
-            # here we should convert the 4 channel img to 3 channel, use PIL.Image.convert("RGB")
-            img = np.array(Image.open(str(img_path)).convert("RGB"))
-
-            if self.time_image_transform:
-                img = self.time_image_transform(img)
-
-            one_patient_time_series.append(img)
-
+        for p in part:
+            one_patient_time_series.append(self.time_series[idx][p])
+                
         # * Step3: put the 4DCT and 2D time series data into a dict.
         sample_info_dict = {
             'patient_id': idx,
             '4DCT': torch.stack(one_patient_full_vol, dim=0),
             # c, t, h, w
-            '2D_time_series': torch.stack(one_patient_time_series, dim=1)
+            '1D_time_series': one_patient_time_series
         }
 
         return sample_info_dict
