@@ -105,20 +105,21 @@ class PredictLightningModule(LightningModule):
 
         # unpack the batch
         ct_data = batch['4DCT']
-        time_series_list = batch['1D_time_series']
-        time_series_list = [[int(item) for item in sublist] for sublist in time_series_list]  # TODO: 将列表中的字符串转换为整数
-        RPM_tensor = torch.Tensor(time_series_list)
-        RPM_tensor = RPM_tensor.cuda()
+        time_series_img = batch['2D_time_series']
+        # time_series_list = batch['1D_time_series']
+        # time_series_list = [[int(item) for item in sublist] for sublist in time_series_list]  # TODO: 将列表中的字符串转换为整数
+        # RPM_tensor = torch.Tensor(time_series_list)
+        # RPM_tensor = RPM_tensor.cuda()
 
         b, seq, c, vol, h, w = ct_data.size()
-        # b, c, t, h, w = time_series_list.size()
+        b, c, t, h, w = time_series_img.size()
 
         invol = ct_data.clone().detach()
 
         # pred the video frames
         # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
         # time_series_img: 1, 1, 3, 128, 128 # b, c, seq (f), h, w
-        bat_pred, DVF = self.model(invol, rpm_tensor = RPM_tensor, future_seq=self.seq)  
+        bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  
 
         # Caluate training loss
         train_loss = calculate_train_loss(bat_pred, DVF, ct_data, seq)
@@ -159,12 +160,14 @@ class PredictLightningModule(LightningModule):
         ct_data = batch['4DCT']
         # save_sitk_images(ct_data, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult/GT') # Save the croped GT images
         save_sitk_images(ct_data, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/GT') 
-        time_series_list = batch['1D_time_series'] # TODO: 这里改好了，你只需要把这个坐标传到model里面就行了
-        time_series_list = [[int(item) for item in sublist] for sublist in time_series_list]  # TODO: 将列表中的字符串转换为整数
-        RPM_tensor = torch.Tensor(time_series_list)
-        RPM_tensor = RPM_tensor.cuda()
+        time_series_img = batch['2D_time_series']
+        # time_series_list = batch['1D_time_series'] # TODO: 这里改好了，你只需要把这个坐标传到model里面就行了
+        # time_series_list = [[int(item) for item in sublist] for sublist in time_series_list]  # TODO: 将列表中的字符串转换为整数
+        # RPM_tensor = torch.Tensor(time_series_list)
+        # RPM_tensor = RPM_tensor.cuda()
 
         b, seq, c, vol, h, w = ct_data.size()
+        b, c, t, h, w = time_series_img.size()
 
         invol = ct_data.clone().detach()
 
@@ -173,7 +176,7 @@ class PredictLightningModule(LightningModule):
             # invol: 1, 4, 1, 128, 128, 128 # b, seq, c, vol, h, w
             # time_series_img: 1, 4, 3, 128, 128 # b, seq (f), c, h, w
             # bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
-            bat_pred, DVF = self.model(invol, rpm_tensor = RPM_tensor, future_seq=self.seq)  # [1,2,3,176,176]
+            bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  # [1,2,3,176,176]
             # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
 
         # Save images
