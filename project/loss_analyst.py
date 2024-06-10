@@ -263,7 +263,8 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     phase_smooth_l1_loss_list = []
     # SSIM
     ssim_values = []
-    ssim = SSIM().to(device=1) # data_range = 2
+    # ssim = SSIM().to(device=1) # data_range = 2
+    ssim = SSIM().to(device=0) # AWS = 0
     # NCC
     ncc_values = []
     # DICE
@@ -377,7 +378,8 @@ def draw_image(average_ssim, average_ncc, average_dice):
     # 显示图表
     plt.tight_layout()  # 自动调整子图参数, 使之填充整个图像区域
     plt.show()
-    plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/matplot2.png')
+    # 
+    plt.savefig('/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/matplot2.png')
 
     # # STYLE 3 heatmap
     # # 创建一个单行的矩阵，每个指标一个值

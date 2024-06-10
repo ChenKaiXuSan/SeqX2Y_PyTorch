@@ -4,27 +4,30 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "test_LUNA",
-            "type": "python",
-            "request": "launch",
-            "program": "/workspace/SeqX2Y_PyTorch/test/test_LUNA.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: 当前文件",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
+        // {
+        //     "name": "test_LUNA",
+        //     "type": "python",
+        //     "request": "launch",
+        //     // "program": "/workspace/SeqX2Y_PyTorch/test/test_LUNA.py",
+        //     // "program": "/home/ec2-user/SeqX2Y_PyTorch/test/test_LUNA.py",
+        //     "program": "/home/ec2-user/SeqX2Y_PyTorch/test/test.py",
+        //     "console": "integratedTerminal",
+        //     "justMyCode": true
+        // },
+        // {
+        //     "name": "Python: 当前文件",
+        //     "type": "python",
+        //     "request": "launch",
+        //     "program": "${file}",
+        //     "console": "integratedTerminal",
+        //     "justMyCode": true
+        // },
         {
             "name": "train",
             "type": "python",
             "request": "launch",
-            "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
+            // "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
+            "program": "/home/ec2-user/SeqX2Y_PyTorch/project/main.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [

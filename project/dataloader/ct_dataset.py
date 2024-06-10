@@ -217,7 +217,7 @@ class CTDataset(Dataset):
 
         # * Step2: prepare the 2D time series data.
         # load coordinate time series data
-        part = str(breath_path[0]).split('/')[3]
+        part = str(breath_path[0]).split('/')[5]
         part = [int(i) for i in part]
 
         for p in part:

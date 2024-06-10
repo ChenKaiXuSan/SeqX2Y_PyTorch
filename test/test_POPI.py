@@ -23,7 +23,8 @@ Date      	By	Comments
 import os, logging, csv, warnings, sys
 from omegaconf import DictConfig
 # add path to system.
-sys.path.append('/workspace/SeqX2Y_PyTorch')
+# sys.path.append('/workspace/SeqX2Y_PyTorch')
+sys.path.append('/home/ec2-user/SeqX2Y_PyTorch')
 # ignore warnings
 warnings.filterwarnings('ignore')
 
@@ -52,7 +53,7 @@ import hydra
 
 #from scipy.ndimage import zoom
 
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+@hydra.main(version_base=None, config_path="/home/ec2-user/SeqX2Y_PyTorch/configs", config_name="config.yaml")
 def main(config: DictConfig):
 
     #Loading image # 
@@ -100,8 +101,8 @@ def main(config: DictConfig):
     test_RPM = RPM
 
     sample_info_dict = CTDataset(
-                data_path="/workspace/data/POPI_valdata3",
-                data_path2D="/workspace/data/POPI_val2D_seq3",                
+                # data_path="/workspace/data/POPI_valdata3",
+                # data_path2D="/workspace/data/POPI_val2D_seq3",               
                 ct_transform= Compose(
                                         [
                                             CT_normalize(128),

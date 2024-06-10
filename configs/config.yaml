@@ -19,9 +19,10 @@ train:
   # model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
   batch_size: 1 # same as paper 
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
-  log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
+  # log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
+  log_path: /home/ec2-user/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   max_epochs: 200
-  gpu_num: 1 # [0, 1]
+  gpu_num: 0 # [0, 1]
   seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
 
   vol: 128

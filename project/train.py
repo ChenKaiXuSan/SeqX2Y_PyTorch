@@ -157,7 +157,8 @@ class PredictLightningModule(LightningModule):
 
         # unpack the batch
         ct_data = batch['4DCT']
-        save_sitk_images(ct_data, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult/GT') # Save the croped GT images
+        # save_sitk_images(ct_data, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult/GT') # Save the croped GT images
+        save_sitk_images(ct_data, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/GT') 
         time_series_list = batch['1D_time_series'] # TODO: 这里改好了，你只需要把这个坐标传到model里面就行了
         time_series_list = [[int(item) for item in sublist] for sublist in time_series_list]  # TODO: 将列表中的字符串转换为整数
         RPM_tensor = torch.Tensor(time_series_list)
@@ -178,8 +179,8 @@ class PredictLightningModule(LightningModule):
         # Save images
         # save_dvf_image(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
         # save_bat_pred_image(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
-        save_sitk_images(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
-        save_sitk_DVF_images(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult' )
+        save_sitk_images(bat_pred, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult')
+        save_sitk_DVF_images(DVF, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult' )
 
 
         # calculate the validation loss
