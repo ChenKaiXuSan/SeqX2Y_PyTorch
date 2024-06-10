@@ -24,7 +24,7 @@
         // },
         {
             "name": "train",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             // "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
             "program": "/home/ec2-user/SeqX2Y_PyTorch/project/main.py",
