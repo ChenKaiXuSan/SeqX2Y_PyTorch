@@ -19,7 +19,7 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Thursday April 18th 2024 3:34:16 am
+Last Modified: Monday June 10th 2024 3:24:09 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -70,12 +70,18 @@ class CTDataset(Dataset):
             list: 包含所有图像文件路径的列表。
         """
         samples = []
+        # shell读取路径转为list
+        data_path2D_list = str(self.data_path2D).split(',')
         # 遍历数据集目录
-        for sequence_folder in sorted(self.data_path2D.iterdir()):
-            if sequence_folder.is_dir():
+        for sequence_folder in sorted(data_path2D_list):
+        # for sequence_folder in sorted(self.data_path2D.iterdir()):
+            # if sequence_folder.is_dir():
+            
+            # one patient 
+            one_patient_path = Path(sequence_folder)
                 # 遍历序列文件夹内的所有图像文件
-                sequence_images = sorted(sequence_folder.glob('*.png'))
-                samples.append(sequence_images)
+            sequence_images = sorted(one_patient_path.glob('*.png'))
+            samples.append(sequence_images)
         return samples
 
     def load_person(self,):
@@ -88,8 +94,10 @@ class CTDataset(Dataset):
         """
 
         patient_Dict = {}
-
-        for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        # shell读取路径转为list
+        data_path_list = str(self.data_path).split(',')
+        # for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        for i, patient in enumerate(sorted(data_path_list)):
             # * get one patient
             one_patient_breath_path = os.listdir(
                 self.data_path / patient)

@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
+Last Modified: Tuesday June 11th 2024 3:08:47 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -178,7 +178,7 @@ class PredictLightningModule(LightningModule):
 
 
         # calculate the validation loss
-        val_loss, ssim_values, ncc_values, dice_values = calculate_val_loss(bat_pred, DVF, ct_data, seq)
+        val_loss, ssim_values, ncc_values, dice_values, mae_values = calculate_val_loss(bat_pred, DVF, ct_data, seq)
 
 
         # Storing val_loss on the True first iteration 确保只在第一次实际验证迭代时设置初始验证损失
@@ -188,8 +188,9 @@ class PredictLightningModule(LightningModule):
         relative_val_loss = val_loss / self.initial_val_loss 
         # 
         average_ssim = sum(ssim_values) / len(ssim_values)
-        average_ncc = sum(ncc_values) / len(ncc_values)
-        average_dice = sum(dice_values) / len(dice_values)
+        # average_ncc = sum(ncc_values) / len(ncc_values)
+        # average_dice = sum(dice_values) / len(dice_values)
+        average_mae = sum(mae_values) / len(mae_values) # MAE不取平均值,范围为[0, +∞) 
         # save logs  
         logging.info("Patient index: %s" % (batch_idx)) 
         self.log('val_loss', relative_val_loss, on_epoch=True, on_step=True)
@@ -198,14 +199,19 @@ class PredictLightningModule(LightningModule):
         # print(f"Average SSIM: {average_ssim}")
         self.log('Average SSIM', average_ssim)
         logging.info('Average SSIM: %.4f' % average_ssim)
-        self.log('Average NCC', average_ncc)
-        logging.info('Average NCC: %.4f' % average_ncc)
-        self.log('Average Dice', average_dice)
-        logging.info('Average Dice: %.4f' % average_dice)
+        # self.log('Average NCC', average_ncc)
+        # logging.info('Average NCC: %.4f' % average_ncc)
+        # self.log('Average Dice', average_dice)
+        # logging.info('Average Dice: %.4f' % average_dice)
         # logging.info('Average Dice: %.4f' % average_dice.item())
-
+        self.log('Average MAE', average_mae)
+        logging.info('Average MAE: %.4f' % average_mae)
+        # Log each MAE value separately
+        # for i, mae in enumerate(mae_values):
+        #     self.log(f'MAE Value {i}', mae)
+        #     logging.info('MAE Value %d: %.4f' % (i, mae))
         #Draw image
-        draw_image(average_ssim, average_ncc, average_dice)
+        # draw_image(average_ssim, average_ncc, average_dice, average_mae)
 
 
     def configure_optimizers(self):
