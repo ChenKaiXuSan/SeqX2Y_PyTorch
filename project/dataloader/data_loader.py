@@ -191,7 +191,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                # split_image_quarters,
+                split_image_quarters,
             ]
         )
 
@@ -202,7 +202,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                # split_image_quarters,
+                split_image_quarters,
             ]
         )
 
