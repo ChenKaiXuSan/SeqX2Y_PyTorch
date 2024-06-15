@@ -69,13 +69,28 @@ class CTDataset(Dataset):
         返回:
             list: 包含所有图像文件路径的列表。
         """
+        # samples = []
+        # # 遍历数据集目录
+        # for sequence_folder in sorted(self.data_path2D.iterdir()):
+        #     if sequence_folder.is_dir():
+        #         # 遍历序列文件夹内的所有图像文件
+        #         sequence_images = sorted(sequence_folder.glob('*.png'))
+        #         samples.append(sequence_images)
+        # return samples
+
         samples = []
+        # shell读取路径转为list
+        data_path2D_list = str(self.data_path2D).split(',')
         # 遍历数据集目录
-        for sequence_folder in sorted(self.data_path2D.iterdir()):
-            if sequence_folder.is_dir():
+        for sequence_folder in sorted(data_path2D_list):
+        # for sequence_folder in sorted(self.data_path2D.iterdir()):
+            # if sequence_folder.is_dir():
+            
+            # one patient 
+            one_patient_path = Path(sequence_folder)
                 # 遍历序列文件夹内的所有图像文件
-                sequence_images = sorted(sequence_folder.glob('*.png'))
-                samples.append(sequence_images)
+            sequence_images = sorted(one_patient_path.glob('*.png'))
+            samples.append(sequence_images)
         return samples
 
     def load_person(self,):
@@ -87,9 +102,17 @@ class CTDataset(Dataset):
             Dict: patient data Dict.
         """
 
-        patient_Dict = {}
+        # patient_Dict = {}
 
-        for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        # for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        #     # * get one patient
+        #     one_patient_breath_path = os.listdir(
+        #         self.data_path / patient)
+        patient_Dict = {}
+        # shell读取路径转为list
+        data_path_list = str(self.data_path).split(',')
+        # for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        for i, patient in enumerate(sorted(data_path_list)):
             # * get one patient
             one_patient_breath_path = os.listdir(
                 self.data_path / patient)
