@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
+Last Modified: Monday June 10th 2024 3:24:09 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -41,6 +41,36 @@ from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
 
 from ct_dataset import CTDataset
+from PIL import Image
+
+# split 2D images into different part, to test model's performance
+def split_image_half(img):
+    """
+    Split the image into left and right halves.
+    """
+    middle_index = img.size(2) // 2  # Assuming img is in CxHxW format
+    left_half = img[:, :, :middle_index]
+    right_half = img[:, :, middle_index:]
+    # return torch.cat([left_half, right_half], dim=0)  # Concatenate along the channel dimension
+    return left_half # Only return left part of 2D surrogate image
+
+def split_image_quarters(img):
+    """
+    Split the image into four quarters: top-left, top-right, bottom-left, bottom-right.
+    """
+    # Assuming img is in CxHxW format
+    height_middle_index = img.size(1) // 2
+    width_middle_index = img.size(2) // 2
+    
+    top_left = img[:, :height_middle_index, :width_middle_index]
+    top_right = img[:, :height_middle_index, width_middle_index:]
+    bottom_left = img[:, height_middle_index:, :width_middle_index]
+    bottom_right = img[:, height_middle_index:, width_middle_index:]
+    
+    # Concatenate along the channel dimension
+    # This results in a tensor with 4x the number of channels of the input
+    # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
+    return Resize(size=[128, 128])(top_right)
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
@@ -157,6 +187,8 @@ class CTDataModule(LightningDataModule):
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
+                # split_image_half,  # Add the split image function here
+                split_image_quarters,
             ]
         )
 
@@ -166,6 +198,8 @@ class CTDataModule(LightningDataModule):
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
+                # split_image_half,  # Add the split image function here
+                split_image_quarters,
             ]
         )
 
