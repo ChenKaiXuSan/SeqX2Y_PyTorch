@@ -269,6 +269,8 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     ncc_values = []
     # DICE
     dice_values = []
+    # MAE
+    mae_values = []
 
     # Orign Chen+SSIM+NCC+DICE
     for phase in range(seq):
@@ -286,6 +288,9 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
         # dice
         dice_value = dice_coefficient(bat_pred[:,:,phase,...], ct_data[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
         dice_values.append(dice_value)
+        # MAE
+        mae = torch.mean(torch.abs(bat_pred[:,:,phase,...] - ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+        mae_values.append(mae.item())
 
     val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
@@ -325,10 +330,10 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     # self.log('val_loss', val_loss)
     # logging.info('val_loss: %d' % val_loss)
 
-    return val_loss, ssim_values, ncc_values, dice_values
+    return val_loss, ssim_values, ncc_values, dice_values, mae_values
 
 
-def draw_image(average_ssim, average_ncc, average_dice):
+def draw_image(average_ssim, average_ncc, average_dice, average_mae):
     """To draw the SSIM, NCC, Dice's image
 
     Args:
@@ -337,9 +342,9 @@ def draw_image(average_ssim, average_ncc, average_dice):
         average_dice (_type_): _description_
     """    
     # Draw the image
-    metrics = ['SSIM', 'NCC', 'DICE']
+    metrics = ['SSIM', 'NCC', 'DICE', 'MAE']
     # average_dice_cpu = average_dice.cpu().item()
-    values = [average_ssim, average_ncc, average_dice]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
+    values = [average_ssim, average_ncc, average_dice, average_mae]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
     # #  STYLE 1 draw bar picture
     # plt.figure(figsize=(10, 5))
     # plt.bar(metrics, values, color=['blue', 'green', 'red'])
