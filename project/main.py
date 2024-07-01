@@ -11,8 +11,8 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: Monday November 20th 2023 4:49:26 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Last Modified: Tuesday June 25th 2024 10:29:06 am
+Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -42,7 +42,7 @@ import hydra
 from omegaconf import DictConfig
 
 # %%
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+# @hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
 def train(hparams: DictConfig):
 
     # set seed
@@ -90,9 +90,18 @@ def train(hparams: DictConfig):
 
     trainer.fit(ConvLSTMmodel, data_module)
 
+# New use to cross-val 
+@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+def init_params(config):
+    # path to list 
+    print(config)
+    # feed config to train
+    train(config)
+
 # %%
 if __name__ == '__main__':
 
     logging.info("Training Start!")
-    train()
+    init_params()
+    # train()
     logging.info("Training finish!")
