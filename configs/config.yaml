@@ -7,10 +7,11 @@ hydra:
 test:
   data: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_imaging.npz'
   mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
-  rpm: '/workspace/SeqX2Y_PyTorch/test/public_data/rpm_max.csv'
-  ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
-  # ckpt: '/workspace/SeqX2Y_PyTorch/logs/2023-12-09crossval/06-28-15/tensorboard_logs/version_0/checkpoints/epoch=84-val_loss=0.40.ckpt'
-  log_path: '/workspace/SeqX2Y_PyTorch/logs/test_results/'
+  rpm: '/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv'
+  # ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
+  # ckpt: '/workspace/SeqX2Y_PyTorch/logs/2024-01-18/00-09-22/tensorboard_logs/version_0/checkpoints/epoch=96-val_loss=0.35.ckpt'
+  ckpt: '/workspace/SeqX2Y_PyTorch/logs/2024-01-18/128_logs/tensorboard_logs/version_0/checkpoints/epoch=90-val_loss=0.41.ckpt'
+  log_path: '/workspace/SeqX2Y_PyTorch/logs/test_POPIresults/'
 
 # train configs
 train:
@@ -18,9 +19,10 @@ train:
   # model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
   batch_size: 1 # same as paper 
   # model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
-  log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
+  # log_path: /workspace/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S} #  '/workspace/SeqX2Y_PyTorch/logs/' # log save path
+  log_path: /home/ec2-user/SeqX2Y_PyTorch/logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   max_epochs: 200
-  gpu_num: 1 # [0, 1]
+  gpu_num: 0 # [0, 1]
   seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
 
   vol: 128
@@ -28,7 +30,7 @@ train:
 # group by defaults
 defaults:
   - optimizer: adam
-  - data: 4DCT
+  - data: Temp_4DCT
 
 # seq修改后，还需要修改
 

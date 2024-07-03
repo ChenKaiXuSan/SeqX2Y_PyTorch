@@ -133,16 +133,26 @@ class CTDataset(Dataset):
             Dict: patient data Dict.
         """
         
-        patient_Dict = {}
+        # patient_Dict = {}
 
-        for i, patient in enumerate(sorted(self.data_path.iterdir())):
-            # * get one patient 
+        # for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        #     # * get one patient 
+        #     one_patient_breath_path = os.listdir(
+        #         self.data_path / patient)
+
+        #     patient_Dict[i] = self.prepare_file(self.data_path/patient, one_patient_breath_path)
+        patient_Dict = {}
+        # shell读取路径转为list
+        data_path_list = str(self.data_path).split(',')
+        # for i, patient in enumerate(sorted(self.data_path.iterdir())):
+        for i, patient in enumerate(sorted(data_path_list)):
+            # * get one patient
             one_patient_breath_path = os.listdir(
                 self.data_path / patient)
 
-            patient_Dict[i] = self.prepare_file(self.data_path/patient, one_patient_breath_path)
+            patient_Dict[i] = self.prepare_file(
+                self.data_path/patient, one_patient_breath_path)
 
-        
         return patient_Dict
 
     def prepare_file(self, pre_path: Path, one_patient: list):

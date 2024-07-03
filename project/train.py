@@ -22,7 +22,6 @@ Date 	By 	Comments
 
 # %%
 import os, csv, logging, shutil
-import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -37,7 +36,7 @@ from torchmetrics import classification
 from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 # from models.lite_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 from models.Warp import Warp
-from image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
+from utils.image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
 
 # %%
 class PredictLightningModule(LightningModule):
@@ -200,7 +199,7 @@ class PredictLightningModule(LightningModule):
 #------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
         # Reading RPM #
-        with open('/workspace/data/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+        with open('/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
             data = list(csv.reader(f, delimiter=","))        
         RPM = np.array(data)
         RPM = np.float32(RPM)
@@ -369,7 +368,7 @@ class PredictLightningModule(LightningModule):
 #------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
         # Reading RPM #
-        with open('/workspace/data/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+        with open('/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
             data = list(csv.reader(f, delimiter=","))        
         RPM = np.array(data)
         RPM = np.float32(RPM)
@@ -441,19 +440,22 @@ class PredictLightningModule(LightningModule):
         # Save images
         # save_dvf_image(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
         # save_bat_pred_image(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
-        save_sitk_images(bat_pred, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
-        save_sitk_DVF_images(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult' )
+        save_sitk_images(bat_pred, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult')
+        save_sitk_DVF_images(DVF, batch_idx, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult')
 
         # calc loss 
         phase_mse_loss_list = []
         phase_smooth_l1_loss_list = []
         # SSIM
         ssim_values = []
-        ssim = SSIM().to(device=1) # data_range = 2
+        # ssim = SSIM().to(device=1) # data_range = 2
+        ssim = SSIM().to(device=0) # AWS = 0
         # NCC
         ncc_values = []
         # DICE
         dice_values = []
+        # MAE
+        mae_values = []
 
         # # Chen+SSIM+NCC+DICE
         # # for phase in range(self.seq):
@@ -494,6 +496,10 @@ class PredictLightningModule(LightningModule):
             # dice
             dice_value = self.dice_coefficient(bat_pred[:,:,phase,...], batch[:,phase,...].expand_as(bat_pred[:,:,phase,...]))
             dice_values.append(dice_value)
+            # MAE
+            mae = torch.mean(torch.abs(bat_pred[:,:,phase,...] - batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
+            mae_values.append(mae.item())
+
         val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
         # Storing val_loss on the True first iteration 确保只在第一次实际验证迭代时设置初始验证损失
@@ -503,8 +509,9 @@ class PredictLightningModule(LightningModule):
         relative_val_loss = val_loss / self.initial_val_loss 
         # 
         average_ssim = sum(ssim_values) / len(ssim_values)
-        average_ncc = sum(ncc_values) / len(ncc_values)
-        average_dice = sum(dice_values) / len(dice_values)
+        # average_ncc = sum(ncc_values) / len(ncc_values)
+        # average_dice = sum(dice_values) / len(dice_values)
+        average_mae = sum(mae_values) / len(mae_values) # MAE不取平均值,范围为[0, +∞) 
         # save logs  
         logging.info("Patient index: %s" % (batch_idx)) 
         self.log('val_loss', relative_val_loss, on_epoch=True, on_step=True)
@@ -513,55 +520,45 @@ class PredictLightningModule(LightningModule):
         # print(f"Average SSIM: {average_ssim}")
         self.log('Average SSIM', average_ssim)
         logging.info('Average SSIM: %.4f' % average_ssim)
-        self.log('Average NCC', average_ncc)
-        logging.info('Average NCC: %.4f' % average_ncc)
-        self.log('Average Dice', average_dice)
-        logging.info('Average Dice: %.4f' % average_dice)
+        # self.log('Average NCC', average_ncc)
+        # logging.info('Average NCC: %.4f' % average_ncc)
+        # self.log('Average Dice', average_dice)
+        # logging.info('Average Dice: %.4f' % average_dice)
         # logging.info('Average Dice: %.4f' % average_dice.item())
+        self.log('Average MAE', average_mae)
+        logging.info('Average MAE: %.4f' % average_mae)
 
-        # Draw the image
-        metrics = ['SSIM', 'NCC', 'DICE']
-        # average_dice_cpu = average_dice.cpu().item()
-        values = [average_ssim, average_ncc, average_dice]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
-        # #  STYLE 1 draw bar picture
-        # plt.figure(figsize=(10, 5))
-        # plt.bar(metrics, values, color=['blue', 'green', 'red'])
-        # plt.title('Average Metric Values')
-        # plt.xlabel('Metrics')
-        # plt.ylabel('Values')
-        # # show value
-        # for i, v in enumerate(values):
-        #     plt.text(i, v + 0.01, "{:.4f}".format(v), ha='center', va='bottom')
+        # #Draw the image
+        # metrics = ['SSIM', 'NCC', 'DICE']
+        # # average_dice_cpu = average_dice.cpu().item()
+        # values = [average_ssim, average_ncc, average_dice]  # 使用 .item() 转换 PyTorch 张量为 Python 数字
+        # # STYLE 2
+        # plt.style.use('ggplot')
+        # # 创建一个条形图
+        # fig, ax = plt.subplots(figsize=(10, 5))  # 可以调整大小以适应您的需求
+        # # 绘制条形图
+        # bars = ax.bar(metrics, values, color=['salmon', 'cornflowerblue', 'teal'], width=0.5, edgecolor='black', linewidth = 0)
+        # # 添加数值标签
+        # for bar in bars:
+        #     yval = bar.get_height()
+        #     plt.text(bar.get_x() + bar.get_width()/2.0, yval, round(yval, 4), va='bottom', ha='center')
+        # # 设置标题和标签
+        # ax.set_title('Average Metric Values', fontsize=16)
+        # ax.set_xlabel('Metrics', fontsize=14)
+        # ax.set_ylabel('Values', fontsize=14)
+        # # 设置 y 轴的限制
+        # ax.set_ylim(0, 1)
+        # # 移除顶部和右侧的边框线
+        # ax.spines['top'].set_visible(False)
+        # ax.spines['right'].set_visible(False)
+        # # 显示网格线
+        # ax.yaxis.grid(True)
+        # # 设置 y 轴刻度标签的大小
+        # ax.tick_params(axis='y', labelsize=12)
+        # # 显示图表
+        # plt.tight_layout()  # 自动调整子图参数, 使之填充整个图像区域
         # plt.show()
-        # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/matplot1.png')
-
-        # STYLE 2
-        plt.style.use('ggplot')
-        # 创建一个条形图
-        fig, ax = plt.subplots(figsize=(10, 5))  # 可以调整大小以适应您的需求
-        # 绘制条形图
-        bars = ax.bar(metrics, values, color=['salmon', 'cornflowerblue', 'teal'], width=0.5, edgecolor='black', linewidth = 0)
-        # 添加数值标签
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2.0, yval, round(yval, 4), va='bottom', ha='center')
-        # 设置标题和标签
-        ax.set_title('Average Metric Values', fontsize=16)
-        ax.set_xlabel('Metrics', fontsize=14)
-        ax.set_ylabel('Values', fontsize=14)
-        # 设置 y 轴的限制
-        ax.set_ylim(0, 1)
-        # 移除顶部和右侧的边框线
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        # 显示网格线
-        ax.yaxis.grid(True)
-        # 设置 y 轴刻度标签的大小
-        ax.tick_params(axis='y', labelsize=12)
-        # 显示图表
-        plt.tight_layout()  # 自动调整子图参数, 使之填充整个图像区域
-        plt.show()
-        plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/matplot2.png')
+        # plt.savefig('/workspace/SeqX2Y_PyTorch/test/Imageresult/matplot2.png')
 
         # # STYLE 3 heatmap
         # # 创建一个单行的矩阵，每个指标一个值

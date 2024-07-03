@@ -41,7 +41,7 @@ import hydra
 from omegaconf import DictConfig
 
 # %%
-@hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+# @hydra.main(version_base=None, config_path="/workspace/SeqX2Y_PyTorch/configs", config_name="config.yaml")
 def train(hparams: DictConfig):
 
     # set seed
@@ -104,9 +104,17 @@ def train(hparams: DictConfig):
     # return model_check_point.best_model_score.item()
 
 
+@hydra.main(version_base=None, config_path="/home/ec2-user/SeqX2Y_PyTorch/configs", config_name="config.yaml")
+def init_params(config):
+    # path to list 
+    print(config)
+    # feed config to train
+    train(config)
+
 # %%
 if __name__ == '__main__':
 
     logging.info("Training Start!")
-    train()
+    init_params()
+    # train()
     logging.info("Training finish!")
