@@ -244,6 +244,15 @@ def calculate_train_loss(bat_pred, DVF, ct_data, seq):
     
     return train_loss
 
+# Caluate psnr values
+def psnr(target, ref):
+    # Calculate MSE using torch.nn.functional
+    mse = F.mse_loss(target, ref, reduction='mean')
+    if mse == 0:
+        return torch.tensor(float('inf'))
+    dynamic_range = 4000  # 从-1024到2976的范围
+    return 20 * torch.log10(dynamic_range / torch.sqrt(mse))
+
 # Caluate validation loss
 def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     """Caluate validation loss 
@@ -271,6 +280,8 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     dice_values = []
     # MAE
     mae_values = []
+    # PSNR
+    psnr_values = []
 
     # Orign Chen+SSIM+NCC+DICE
     for phase in range(seq):
@@ -291,6 +302,9 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
         # MAE
         mae = torch.mean(torch.abs(bat_pred[:,:,phase,...] - ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
         mae_values.append(mae.item())
+        # psnr
+        psnr_value = psnr(bat_pred[:,:,phase,...], ct_data[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
+        psnr_values.append(psnr_value.item())
 
     val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
@@ -330,7 +344,7 @@ def calculate_val_loss(bat_pred, DVF, ct_data, seq):
     # self.log('val_loss', val_loss)
     # logging.info('val_loss: %d' % val_loss)
 
-    return val_loss, ssim_values, ncc_values, dice_values, mae_values
+    return val_loss, ssim_values, ncc_values, dice_values, mae_values, psnr_values
 
 
 def draw_image(average_ssim, average_ncc, average_dice, average_mae):

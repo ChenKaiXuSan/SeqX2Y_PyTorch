@@ -50,8 +50,11 @@ def split_image_half(img):
     middle_index = img.size(2) // 2  # Assuming img is in CxHxW format
     left_half = img[:, :, :middle_index]
     right_half = img[:, :, middle_index:]
+    # up_half = img[:, :middle_index, :] #不行，分上下会报错？！
+    # bottom_half = img[:, middle_index:, :]
     # return torch.cat([left_half, right_half], dim=0)  # Concatenate along the channel dimension
-    return left_half # Only return left part of 2D surrogate image
+    return right_half 
+    # return Resize(size=[64, 64])(up_half)
 
 def split_image_quarters(img):
     """
@@ -69,7 +72,7 @@ def split_image_quarters(img):
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(top_left)
+    return Resize(size=[128, 128])(bottom_right)
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
@@ -187,7 +190,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                split_image_quarters,
+                # split_image_quarters,
             ]
         )
 
@@ -198,7 +201,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                split_image_quarters,
+                # split_image_quarters,
             ]
         )
 
