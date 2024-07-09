@@ -184,7 +184,7 @@ class PredictLightningModule(LightningModule):
 
 
         # calculate the validation loss
-        val_loss, ssim_values, ncc_values, dice_values, mae_values = calculate_val_loss(bat_pred, DVF, ct_data, seq)
+        val_loss, ssim_values, ncc_values, dice_values, mae_values, psnr_values = calculate_val_loss(bat_pred, DVF, ct_data, seq)
 
 
         # Storing val_loss on the True first iteration 确保只在第一次实际验证迭代时设置初始验证损失
@@ -197,6 +197,7 @@ class PredictLightningModule(LightningModule):
         # average_ncc = sum(ncc_values) / len(ncc_values)
         # average_dice = sum(dice_values) / len(dice_values)
         average_mae = sum(mae_values) / len(mae_values) # MAE不取平均值,范围为[0, +∞) 
+        average_psnr = sum(psnr_values) / len(psnr_values)
         # save logs  
         logging.info("Patient index: %s" % (batch_idx)) 
         self.log('val_loss', relative_val_loss, on_epoch=True, on_step=True)
@@ -216,6 +217,8 @@ class PredictLightningModule(LightningModule):
         # for i, mae in enumerate(mae_values):
         #     self.log(f'MAE Value {i}', mae)
         #     logging.info('MAE Value %d: %.4f' % (i, mae))
+        self.log('Average PSNR', average_psnr)
+        logging.info('Average PSNR: %.4f' % average_psnr)
 
         #Draw image
         #draw_image(average_ssim, average_ncc, average_dice, average_mae)
