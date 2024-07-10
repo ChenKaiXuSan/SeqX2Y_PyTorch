@@ -39,6 +39,15 @@ from models.Warp import Warp
 from utils.image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
 
 # %%
+# Caluate psnr values
+def psnr(target, ref):
+    # Calculate MSE using torch.nn.functional
+    mse = F.mse_loss(target, ref, reduction='mean')
+    if mse == 0:
+        return torch.tensor(float('inf'))
+    dynamic_range = 4000  # 从-1024到2976的范围
+    return 20 * torch.log10(dynamic_range / torch.sqrt(mse))
+
 class PredictLightningModule(LightningModule):
 
     def __init__(self, hparams):
@@ -456,6 +465,8 @@ class PredictLightningModule(LightningModule):
         dice_values = []
         # MAE
         mae_values = []
+        # PSNR
+        psnr_values = []
 
         # # Chen+SSIM+NCC+DICE
         # # for phase in range(self.seq):
@@ -499,6 +510,9 @@ class PredictLightningModule(LightningModule):
             # MAE
             mae = torch.mean(torch.abs(bat_pred[:,:,phase,...] - batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...])))
             mae_values.append(mae.item())
+            # psnr
+            psnr_value = psnr(bat_pred[:,:,phase,...], batch[:, phase, ...].expand_as(bat_pred[:,:,phase,...]))
+            psnr_values.append(psnr_value.item())
 
         val_loss = torch.mean(torch.stack(phase_mse_loss_list,dim=0)) + torch.mean(torch.stack(phase_smooth_l1_loss_list, dim=0))
 
@@ -511,7 +525,9 @@ class PredictLightningModule(LightningModule):
         average_ssim = sum(ssim_values) / len(ssim_values)
         # average_ncc = sum(ncc_values) / len(ncc_values)
         # average_dice = sum(dice_values) / len(dice_values)
-        average_mae = sum(mae_values) / len(mae_values) # MAE不取平均值,范围为[0, +∞) 
+        average_mae = sum(mae_values) / len(mae_values) # MAE不取平均值,范围为[0, +∞)
+        # PSNR
+        average_psnr = sum(psnr_values) / len(psnr_values) 
         # save logs  
         logging.info("Patient index: %s" % (batch_idx)) 
         self.log('val_loss', relative_val_loss, on_epoch=True, on_step=True)
@@ -527,6 +543,8 @@ class PredictLightningModule(LightningModule):
         # logging.info('Average Dice: %.4f' % average_dice.item())
         self.log('Average MAE', average_mae)
         logging.info('Average MAE: %.4f' % average_mae)
+        self.log('Average PSNR', average_psnr)
+        logging.info('Average PSNR: %.4f' % average_psnr)
 
         # #Draw the image
         # metrics = ['SSIM', 'NCC', 'DICE']
