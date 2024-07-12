@@ -129,7 +129,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         # for t in range(seq_len): # test_LUNA.py used this
         # for t in range(seq_len-1, 0, -1): # In4 Out3 use This 这个循环将从 seq_len-1 开始，逐步递减，直到但不包括0。例如，如果 seq_len 是5，则循环将遍历以下序列：4, 3, 2, 1
         for t in range(seq_len-1, -1, -1): # In3 Out3 use This
-
+        # for t in range(seq_len-1): # 正向测试
             # # 应用3D CNN encoder
             # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...])  # batch_2D torch.Size([1, 3, 3, 128, 128])
             # # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :, ...]) 
