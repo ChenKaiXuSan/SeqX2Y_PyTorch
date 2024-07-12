@@ -11,7 +11,7 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: Tuesday June 11th 2024 3:08:47 am
+Last Modified: Monday July 1st 2024 4:35:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -31,7 +31,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning import loggers as pl_loggers
 
 # callbacks
-from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, ModelCheckpoint, lr_monitor
+from pytorch_lightning.callbacks import TQDMProgressBar, RichModelSummary, ModelCheckpoint, lr_monitor, EarlyStopping
 from pl_bolts.callbacks import PrintTableMetricsCallback, TrainingDataMonitor
 # from utils.utils import get_ckpt_path
 
@@ -74,6 +74,13 @@ def train(hparams: DictConfig):
         save_top_k=3,
     )
 
+    # define the early stop.
+    early_stopping = EarlyStopping(
+        monitor='val_loss',
+        patience=5,
+        mode='min',
+    )
+
     # bolts callbacks
     table_metrics_callback = PrintTableMetricsCallback()
     monitor = TrainingDataMonitor(log_every_n_steps=1)
@@ -85,7 +92,7 @@ def train(hparams: DictConfig):
         logger=tb_logger,
         check_val_every_n_epoch=1,
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-                   model_check_point, lr_logger], # 去掉monitor
+                   model_check_point, lr_logger], # 去掉monitor,early_stopping
     )
 
     trainer.fit(ConvLSTMmodel, data_module)

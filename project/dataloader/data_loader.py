@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Monday June 10th 2024 3:24:09 am
+Last Modified: Monday July 1st 2024 4:35:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -36,6 +36,7 @@ from torchvision.transforms import (
 )
 
 from torchvision.transforms.functional import resize
+from torchvision.utils import save_image
 
 from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
@@ -48,10 +49,13 @@ def split_image_half(img):
     """
     Split the image into left and right halves.
     """
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
     middle_index = img.size(2) // 2  # Assuming img is in CxHxW format
     left_half = img[:, :, :middle_index]
     right_half = img[:, :, middle_index:]
     # return torch.cat([left_half, right_half], dim=0)  # Concatenate along the channel dimension
+    save_image(left_half, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/left_half.png')
     return left_half # Only return left part of 2D surrogate image
 
 def split_image_quarters(img):
@@ -62,15 +66,22 @@ def split_image_quarters(img):
     height_middle_index = img.size(1) // 2
     width_middle_index = img.size(2) // 2
     
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
     top_left = img[:, :height_middle_index, :width_middle_index]
     top_right = img[:, :height_middle_index, width_middle_index:]
     bottom_left = img[:, height_middle_index:, :width_middle_index]
     bottom_right = img[:, height_middle_index:, width_middle_index:]
+    save_image(img, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
+    bottom_right = bottom_right - bottom_right.min()
+    bottom_right = bottom_right / bottom_right.max()
+    save_image(bottom_right, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/bottom_right.png')
+    save_image(Resize(size=[128, 128])(bottom_right), '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_bottom_right.png')
     
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(top_right)
+    return Resize(size=[128, 128])(bottom_right)
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
