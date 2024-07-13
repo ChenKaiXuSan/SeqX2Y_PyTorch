@@ -36,6 +36,7 @@ from torchvision.transforms import (
 )
 
 from torchvision.transforms.functional import resize
+from torchvision.utils import save_image
 
 from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
@@ -63,16 +64,30 @@ def split_image_quarters(img):
     # Assuming img is in CxHxW format
     height_middle_index = img.size(1) // 2
     width_middle_index = img.size(2) // 2
-    
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
     top_left = img[:, :height_middle_index, :width_middle_index]
     top_right = img[:, :height_middle_index, width_middle_index:]
     bottom_left = img[:, height_middle_index:, :width_middle_index]
     bottom_right = img[:, height_middle_index:, width_middle_index:]
-    
+
+    save_image(img, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
+    save_image(top_right, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/top_right.png')
+    save_image(Resize(size=[128, 128])(top_right), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_top_right.png')   
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(bottom_right)
+    return Resize(size=[128, 128])(top_right)
+
+# 归一化处理测试
+def zero2one(img):
+    """
+    原本img直接保存显示为全黑，将其进行0-1归一后再保存显示.
+    """
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
+    save_image(img, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
+    return img
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
@@ -191,6 +206,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
+                zero2one,
             ]
         )
 
@@ -202,6 +218,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
+                zero2one,
             ]
         )
 
