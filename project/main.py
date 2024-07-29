@@ -11,7 +11,7 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: Monday July 1st 2024 4:35:57 am
+Last Modified: Monday July 22nd 2024 9:26:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -77,7 +77,7 @@ def train(hparams: DictConfig):
     # define the early stop.
     early_stopping = EarlyStopping(
         monitor='val_loss',
-        patience=5,
+        patience=40,
         mode='min',
     )
 
@@ -92,7 +92,7 @@ def train(hparams: DictConfig):
         logger=tb_logger,
         check_val_every_n_epoch=1,
         callbacks=[progress_bar, rich_model_summary, table_metrics_callback,
-                   model_check_point, lr_logger], # 去掉monitor,early_stopping
+                   model_check_point, lr_logger, early_stopping], # 去掉monitor,early_stopping. 又重新加上早停了
     )
 
     trainer.fit(ConvLSTMmodel, data_module)

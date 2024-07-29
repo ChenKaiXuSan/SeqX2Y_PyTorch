@@ -19,7 +19,7 @@ The returned dict used by the train/val process, in tran.py file.
 
 Have a good code time :)
 -----
-Last Modified: Monday June 10th 2024 3:24:09 am
+Last Modified: Monday July 22nd 2024 9:26:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -40,6 +40,7 @@ from PIL import Image
 
 import SimpleITK as sitk
 import numpy as np
+import re
 
 
 class CTDataset(Dataset):
@@ -106,6 +107,19 @@ class CTDataset(Dataset):
                 self.data_path/patient, one_patient_breath_path)
 
         return patient_Dict
+    
+    # 在这里针对不同的数据集格式进行排序
+    def sort_paths(self, paths_list):
+        # 判断文件名格式
+        if paths_list and "slice" in paths_list[0].name:
+            # 适用于 50-slice000.dcm 这种格式
+            return sorted(paths_list)
+        if paths_list and "IMG" in paths_list[0].name:
+            # 适用于 IMG001.dcm 这种格式
+            return sorted(paths_list)
+        else:
+            # 适用于 9.270.5.101.dcm 这种格式
+            return sorted(paths_list, key=lambda x: int(x.stem.split('.')[-1]))
 
     def prepare_file(self, pre_path: Path, one_patient: list):
 
@@ -117,6 +131,8 @@ class CTDataset(Dataset):
 
             # here prepare the one patient all breath path.
             one_breath_full_path_List = sorted(list(iter(curr_path.iterdir())))
+            # 使用 sorted 函数对路径进行排序
+            one_breath_full_path_List = self.sort_paths(one_breath_full_path_List)
             one_patient_breath_path_List.append(one_breath_full_path_List)
 
         return one_patient_breath_path_List
@@ -199,7 +215,7 @@ class CTDataset(Dataset):
                         torch.from_numpy(image_array).to(torch.float32))
                 one_breath_img.append(image_array)
                 # choose start slice to put into the one_breath_img
-                if len(one_breath_img) > 10: # 0219crossval use 20 v=118, 0303use 10 v=128
+                if len(one_breath_img) > 3: # 没加东北大数据前为10，加了后随时更改: # 0219crossval use 20 v=118, 0303use 10 v=128
                     choose_slice_one_breath_img.append(image_array)
                 # FIXME: this is that need 128 for one patient, for sptail transformer, in paper.
                 # ! or should unifrom extract 128 from all vol, not from start to index.
