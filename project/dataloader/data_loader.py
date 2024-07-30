@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Monday July 1st 2024 4:35:57 am
+Last Modified: Monday July 22nd 2024 9:26:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
@@ -73,15 +73,15 @@ def split_image_quarters(img):
     bottom_left = img[:, height_middle_index:, :width_middle_index]
     bottom_right = img[:, height_middle_index:, width_middle_index:]
     save_image(img, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
-    bottom_right = bottom_right - bottom_right.min()
-    bottom_right = bottom_right / bottom_right.max()
-    save_image(bottom_right, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/bottom_right.png')
-    save_image(Resize(size=[128, 128])(bottom_right), '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_bottom_right.png')
+    top_right = top_right - top_right.min()
+    top_right = top_right / top_right.max()
+    save_image(top_right, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/bottom_right.png')
+    save_image(Resize(size=[128, 128])(top_right), '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_bottom_right.png')
     
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(bottom_right)
+    return Resize(size=[128, 128])(top_right)
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
@@ -207,7 +207,7 @@ class CTDataModule(LightningDataModule):
             [
                 ToTensor(),
                 Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
-                Normalize((0.45), (0.225)),
+                Normalize((0.45), (0.225)), 
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 split_image_quarters,
