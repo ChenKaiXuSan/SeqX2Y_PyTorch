@@ -49,13 +49,18 @@ def split_image_half(img):
     Split the image into left and right halves.
     """
     middle_index = img.size(2) // 2  # Assuming img is in CxHxW format
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
     left_half = img[:, :, :middle_index]
     right_half = img[:, :, middle_index:]
-    # up_half = img[:, :middle_index, :] #不行，分上下会报错？！
-    # bottom_half = img[:, middle_index:, :]
+    up_half = img[:, :middle_index, :] #不行，分上下会报错？！修改了Resize，现在不会报错了
+    bottom_half = img[:, middle_index:, :]
     # return torch.cat([left_half, right_half], dim=0)  # Concatenate along the channel dimension
-    return right_half 
-    # return Resize(size=[64, 64])(up_half)
+
+    bottom_half = Resize(size=[128, 128])(bottom_half)
+    # save_image(left_half, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/left_half.png')
+    return bottom_half 
+    # return Resize(size=[128, 128])(left_half)
 
 def split_image_quarters(img):
     """
@@ -72,12 +77,12 @@ def split_image_quarters(img):
     bottom_right = img[:, height_middle_index:, width_middle_index:]
 
     save_image(img, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
-    save_image(top_right, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/top_right.png')
-    save_image(Resize(size=[128, 128])(top_right), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_top_right.png')   
+    save_image(bottom_right, '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/top_right.png')
+    save_image(Resize(size=[128, 128])(bottom_right), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_top_right.png')   
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(top_right)
+    return Resize(size=[128, 128])(bottom_right)
 
 # 归一化处理测试
 def zero2one(img):
@@ -206,7 +211,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
-                zero2one,
+                # zero2one,
             ]
         )
 
@@ -218,7 +223,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
-                zero2one,
+                # zero2one,
             ]
         )
 
