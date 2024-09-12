@@ -84,6 +84,38 @@ def split_image_quarters(img):
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
     return Resize(size=[128, 128])(bottom_right)
 
+def split_image_sixteenths(img, selected_index=15):
+    """
+    Split the image into sixteen equal parts and return the part specified by `selected_index`.
+    
+    Args:
+    img (Tensor): Input image tensor in CxHxW format.
+    selected_index (int): Index of the part to return (0 to 15).
+    """
+    C, H, W = img.shape  # Assuming img is in CxHxW format
+    height_quarter_index = H // 4
+    width_quarter_index = W // 4
+
+    # Normalize image to [0, 1]
+    img = img - img.min()  # Translate to positive values
+    img = img / img.max()  # Scale to [0, 1]
+
+    parts = []
+    for i in range(4):
+        for j in range(4):
+            part = img[:, i * height_quarter_index:(i + 1) * height_quarter_index,
+                       j * width_quarter_index:(j + 1) * width_quarter_index]
+            parts.append(part)
+            # Optionally save each part
+            # save_image(part, f'/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/16/part_{i*4+j+1}.png')
+            # save_image(Resize(part, size=(128, 128)), f'/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/16/resized_part_{i*4+j+1}.png')
+    
+    # save_image(parts[selected_index], '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/1_16.png')
+    # save_image(Resize(size=[128, 128])(parts[selected_index]), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_1_16.png')   
+    
+    # Return the selected part
+    return Resize(size=[128, 128])(parts[selected_index])
+
 # 归一化处理测试
 def zero2one(img):
     """
@@ -211,6 +243,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
+                split_image_sixteenths, # 1/16
                 # zero2one,
             ]
         )
@@ -223,6 +256,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
+                split_image_sixteenths, # 1/16
                 # zero2one,
             ]
         )
