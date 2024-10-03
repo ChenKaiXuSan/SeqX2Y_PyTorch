@@ -60,7 +60,7 @@ class Encoder3DCNN(nn.Module):
         x = self.pool1(x)
         x = self.relu3(self.conv3(x))
         x = self.pool2(x)
-        x = self.relu4(self.conv4(x))
+        x = self.relu4(self.conv4(x)) # 在这准备增加pytorch-grad-cam
         # x = self.relu1(self.conv1(x))
         # x = self.relu2(self.conv2(x))
         # x = self.relu3(self.conv3(x))

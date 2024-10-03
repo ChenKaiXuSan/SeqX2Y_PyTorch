@@ -84,7 +84,7 @@ def split_image_quarters(img):
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
     return Resize(size=[128, 128])(bottom_right)
 
-def split_image_sixteenths(img, selected_index=15):
+def split_image_sixteenths(img, selected_index=6):
     """
     Split the image into sixteen equal parts and return the part specified by `selected_index`.
     
@@ -110,8 +110,8 @@ def split_image_sixteenths(img, selected_index=15):
             # save_image(part, f'/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/16/part_{i*4+j+1}.png')
             # save_image(Resize(part, size=(128, 128)), f'/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/16/resized_part_{i*4+j+1}.png')
     
-    # save_image(parts[selected_index], '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/1_16.png')
-    # save_image(Resize(size=[128, 128])(parts[selected_index]), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_1_16.png')   
+    save_image(parts[selected_index], '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/15_16.png')
+    save_image(Resize(size=[128, 128])(parts[selected_index]), '/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_15_16.png')   
     
     # Return the selected part
     return Resize(size=[128, 128])(parts[selected_index])
