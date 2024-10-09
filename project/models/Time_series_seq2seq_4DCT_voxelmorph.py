@@ -132,7 +132,7 @@ class EncoderDecoderConvLSTM(nn.Module):
         for t in range(seq_len-1, -1, -1): # In3 Out3 use This
 
             # 应用3D CNN encoder
-            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :-1, ...])  # batch_2D torch.Size([1, 3, 3, 128, 128])
+            time_series_fat_encoder = self.encoder3d_cnn(batch_2D[:, :, :-1, ...])  # batch_2D torch.Size([1, 3, 3, 128, 128])
             # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :, ...]) 
 
             h_t1 = self.encoder1_conv(x[:,t,...])
@@ -144,18 +144,18 @@ class EncoderDecoderConvLSTM(nn.Module):
                                    cur_state = [h_t5,c_t5])
 
             # check shape 
-            assert len(h_t5.shape) == len(time_series_fat.shape), "the dimension of h_t5 and batch_2D_encoded is not same."
+            assert len(h_t5.shape) == len(time_series_fat_encoder.shape), "the dimension of h_t5 and batch_2D_encoded is not same."
 
             # fuse the 4DCT feature and time series feature, for encoder
             # encoder_vector = h_t5 @ time_series_fat # 相乘，需要解开
-            encoder_vector = h_t5 + time_series_fat
+            encoder_vector = h_t5 + time_series_fat_encoder
 
             # 2d的时候以下这段原本是没注释的，这样上面的h_t5 @ time_series_fat就没用了，不知到是否存在问题？现将其注释再进行计算
             # encoder_vector = h_t5
 
         for t in range(future_step): # 这里不用改成future_step-1
 
-            time_series_fat = self.encoder3d_cnn(batch_2D[:, :, 1:, ...])
+            time_series_fat_decoder = self.encoder3d_cnn(batch_2D[:, :, 1:, ...])
             # time_series_fat = self.encoder3d_cnn(batch_2D[:, :, :, ...])
 
             h_t6, c_t6 = self.ConvLSTM3d3(input_tensor=encoder_vector,
@@ -164,11 +164,11 @@ class EncoderDecoderConvLSTM(nn.Module):
                                    cur_state=[h_t7, c_t7])
 
             # check shape
-            assert len(h_t7.shape) == len(time_series_fat.shape), "the dimension of h_t7 and batch_2D_encoded is not same."
+            assert len(h_t7.shape) == len(time_series_fat_decoder.shape), "the dimension of h_t7 and batch_2D_encoded is not same."
 
             # fuse the 4DCT feature and time series feature, for decoder
             # decoder_vector = h_t7 @ time_series_fat # 相乘，需要解开
-            decoder_vector = h_t7 + time_series_fat
+            decoder_vector = h_t7 + time_series_fat_decoder
             
             # 2d的时候以下这段原本是没注释的，这样上面的h_t7 @ time_series_fat就没用了，不知到是否存在问题？现将其注释再进行计算
             # decoder_vector = h_t7
@@ -199,7 +199,8 @@ class EncoderDecoderConvLSTM(nn.Module):
         output_img = output_img.permute(0,2,1,3,4,5) # output_img torch.Size([1, 1, 3, 70, 120, 140])
         output_dvf = output_dvf.permute(0,2,1,3,4,5) # output_dvf torch.Size([1, 3, 3, 70, 120, 140])
 
-        return output_img, output_dvf
+        # return output_img, output_dvf  没加pytorch-gard-cam的时候
+        return output_img, output_dvf, time_series_fat_encoder, time_series_fat_decoder, batch_2D
 
 
     def forward(self, x, batch_2D, future_seq=0, hidden_state=None):

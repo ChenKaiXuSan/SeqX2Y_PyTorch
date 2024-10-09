@@ -32,13 +32,22 @@ from torchmetrics import StructuralSimilarityIndexMeasure as SSIM
 from pytorch_lightning import LightningModule
 from torchmetrics import classification
 
+# *-----------新增 Pyotrch-Gard-Cam------------*
+from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
+import matplotlib.pyplot as plt
+import torch.nn as nn
+from utils.grad_cam_2D import GradCAM_2D
+# *-----------新增 Pyotrch-Gard-Cam------------*
+
 # from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 # from models.lite_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 from models.Time_series_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 from models.Warp import Warp
 from utils.image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
 from loss_analyst import *
-
+   
 # %%
 class PredictLightningModule(LightningModule):
 
@@ -119,7 +128,7 @@ class PredictLightningModule(LightningModule):
         # pred the video frames
         # invol: 1, 1, 1, 128, 128, 128 # b, seq, c, vol, h, w
         # time_series_img: 1, 1, 3, 128, 128 # b, c, seq (f), h, w
-        bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  
+        bat_pred, DVF, _ = self.model(invol, time_series_img, future_seq=self.seq)  # 原本 bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)
 
         # Caluate training loss
         train_loss = calculate_train_loss(bat_pred, DVF, ct_data, seq)
@@ -171,13 +180,42 @@ class PredictLightningModule(LightningModule):
 
         invol = ct_data.clone().detach()
 
+        # *-----------新增 Pyotrch-Gard-Cam------------*
+        # 选择要应用Grad-CAM的目标卷积层，比如conv4层
+        target_layers = [self.model.encoder3d_cnn.conv4]
+       
+        # 初始化Grad-CAM，指定模型和目标层
+        cam = GradCAM_2D(model=self.model, target_layers=target_layers)
+        # *-----------新增 Pyotrch-Gard-Cam------------*
+
         # pred the video frames
         with torch.no_grad():
             # invol: 1, 4, 1, 128, 128, 128 # b, seq, c, vol, h, w
             # time_series_img: 1, 4, 3, 128, 128 # b, seq (f), c, h, w
             # bat_pred, DVF = self.model(invol, rpm_x=test_x_rpm_tensor, rpm_y=test_y_rpm_tensor, future_seq=self.seq)  # [1,2,3,176,176]
-            bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  # [1,2,3,176,176]
+            # bat_pred, DVF = self.model(invol, time_series_img, future_seq=self.seq)  # [1,2,3,176,176] 没加pytorch-gard-cam的时候
+            bat_pred, DVF, time_series_fat_encoder, time_series_fat_decoder, batch_2D = self.model(invol, time_series_img, future_seq=self.seq) # 加pytorch-gard-cam
             # bat_pred.shape=(1,1,3,128,128,128) DVF.shape=(1,3,3,128,128,128) 
+
+            # *-----------新增 Pyotrch-Gard-Cam------------*   
+            # 定义输入图像张量（例如x是输入张量）
+            input_tensor = [invol, batch_2D]  # 根据你的输入数据调整
+            
+            # 选择目标类（对于分类任务，一般是类别索引）, 这里需要根据你的任务修改，假设使用类索引0
+            # targets = [ClassifierOutputTarget(0)]  # 示例：类别索引为0
+            targets = [bat_pred[:, :, :, :, 64, :].mean()]
+           
+            # 计算目标层的Grad-CAM
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets, future_seq=self.seq)
+           
+            # 将Grad-CAM灰度图映射到原图像上以进行可视化, 你需要根据实际的输入图像进行映射
+            visualization = show_cam_on_image(time_series_fat_encoder, grayscale_cam, use_rgb=True)
+           
+            # 可视化或保存CAM结果
+            plt.imshow(visualization)
+            plt.show()
+            plt.savefig('/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/grad_cam/visualization.png')
+            # *-----------新增 Pyotrch-Gard-Cam------------*
 
         # Save images
         # save_dvf_image(DVF, batch_idx, '/workspace/SeqX2Y_PyTorch/test/Imageresult')
