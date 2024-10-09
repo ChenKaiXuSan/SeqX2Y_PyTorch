@@ -56,7 +56,7 @@ class ActivationsAndGradients_2D:
         for handle in self.handles:
             handle.remove()
 
-class BaseCAM:
+class BaseCAM_2D:
     def __init__(
         self,
         model: torch.nn.Module,

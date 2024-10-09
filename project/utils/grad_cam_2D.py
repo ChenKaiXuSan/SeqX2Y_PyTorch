@@ -3,11 +3,11 @@ import torch
 import torch.nn.functional as F
 
 from typing import Tuple, List
-from utils.base_cam_2D import BaseCAM, ActivationsAndGradients_2D
+from utils.base_cam_2D import BaseCAM_2D
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 
-class GradCAM_2D(BaseCAM):
+class GradCAM_2D(BaseCAM_2D):
     def __init__(self, model, target_layers,
                  reshape_transform=None):
         super(
