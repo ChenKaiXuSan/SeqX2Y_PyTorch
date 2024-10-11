@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "Seq2Seq",
+			"path": "/home/xchen/workspace/SeqX2Y_PyTorch"
+		},
+		{
+			"name": "dataset",
+			"path": "/mnt/dataset/ouyang"
+		}
+	]
+}
