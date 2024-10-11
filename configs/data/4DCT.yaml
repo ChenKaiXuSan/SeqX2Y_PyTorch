@@ -1,10 +1,10 @@
 # 4DCT
-data_path: "/home/ec2-user/SeqX2Y_PyTorch/dataset/024/POPI_seq3_024" 
-val_data_path: "/home/ec2-user/SeqX2Y_PyTorch/dataset/024/POPI_valseq3_024" 
+data_path: "/mnt/dataset/ouyang/dataset/024/POPI_seq3_024" 
+val_data_path: "/mnt/dataset/ouyang/dataset/024/POPI_valseq3_024" 
 num_workers: 0
 img_size: 128 # 128 # 224
 
-data_path2D: "/home/ec2-user/SeqX2Y_PyTorch/dataset/024/POPI_seq3_2D_024" 
-val_data_path2D: "/home/ec2-user/SeqX2Y_PyTorch/dataset/024/POPI_valseq3_2D_024" 
+data_path2D: "/mnt/dataset/ouyang/dataset/024/POPI_seq3_2D_024" 
+val_data_path2D: "/mnt/dataset/ouyang/dataset/024/POPI_valseq3_2D_024" 
 
-# data_path1D: /home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv
+# data_path1D: /mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv
