@@ -2,7 +2,7 @@
 	"folders": [
 		{
 			"name": "Seq2Seq",
-			"path": "/home/xchen/workspace/SeqX2Y_PyTorch"
+			"path": "../"
 		},
 		{
 			"name": "dataset",

@@ -3,6 +3,7 @@ hydra:
   run:
     dir: ${train.log_path}
 
+# TODO: the root path should be modified
 root: '/workspace/SeqX2Y_PyTorch'
 
 # test dataset configs
