@@ -10,8 +10,8 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
-Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+Last Modified: Friday October 11th 2024 1:04:43 pm
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----
@@ -27,7 +27,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 import time
-from utils import counter  # Import the global counter
+# from utils import counter  # Import the global counter
+
+# counter.py
+timestamp_counter = 0  # Initialize a single counter
 
 # save the dvf.png for test
 def save_dvf_image(DVF, batch_idx, savepath):

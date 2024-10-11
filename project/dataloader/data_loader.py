@@ -10,8 +10,8 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
-Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+Last Modified: Friday October 11th 2024 1:04:43 pm
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
@@ -41,7 +41,7 @@ from torchvision.utils import save_image
 from typing import Any, Callable, Dict, Optional, Type, Union
 from pytorch_lightning import LightningDataModule
 
-from ct_dataset import CTDataset
+from project.dataloader.ct_dataset import CTDataset
 
 # split 2D images into different part, to test model's performance
 def split_image_half(img):

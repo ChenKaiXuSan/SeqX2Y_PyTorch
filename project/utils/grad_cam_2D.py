@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from typing import Tuple, List
-from utils.base_cam_2D import BaseCAM_2D
+from project.utils.base_cam_2D import BaseCAM_2D
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 

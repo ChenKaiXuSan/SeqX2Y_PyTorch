@@ -14,20 +14,12 @@
         //     "console": "integratedTerminal",
         //     "justMyCode": true
         // },
-        // {
-        //     "name": "Python: 当前文件",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "${file}",
-        //     "console": "integratedTerminal",
-        //     "justMyCode": true
-        // },
         {
-            "name": "train",
+            "name": "split_model",
             "type": "debugpy",
             "request": "launch",
-            // "program": "/workspace/SeqX2Y_PyTorch/project/main.py",
-            "program": "/home/ec2-user/SeqX2Y_PyTorch/project/main.py",
+            "cwd": "${workspaceFolder}",
+            "module": "project.main",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [

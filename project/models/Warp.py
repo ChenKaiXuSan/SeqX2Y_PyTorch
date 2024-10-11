@@ -6,25 +6,24 @@ from torch import nn
 import torch.nn.functional as F
 import os
 from glob import glob
-# from project.models.layers import SpatialTransformer # test_LUNA.py use this
-from models.layers import SpatialTransformer # train.py use this
-from unet_utils import *
 
+# from project.models.layers import SpatialTransformer # test_LUNA.py use this
+from layers import SpatialTransformer  # train.py use this
+from unet_utils import *
 
 
 class Warp(nn.Module):
     """
     definition of U-net for segmentation
     """
+
     def __init__(self, size1, size2, size3):
         super(Warp, self).__init__()
 
-        self.transformer = SpatialTransformer((size1,size2,size3))
+        self.transformer = SpatialTransformer((size1, size2, size3))
 
-    def forward(self, bat_img,dvf):
-        #print(bat_img.shape, bat_label.shape)
+    def forward(self, bat_img, dvf):
+        # print(bat_img.shape, bat_label.shape)
         warped = self.transformer(bat_img, dvf)
 
         return warped
-
-
