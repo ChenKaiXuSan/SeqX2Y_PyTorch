@@ -30,7 +30,7 @@ train:
 # group by defaults
 defaults:
   - optimizer: adam
-  - data: 4DCT
+  - data: Temp_4DCT
 
 # seq修改后，还需要修改
 
