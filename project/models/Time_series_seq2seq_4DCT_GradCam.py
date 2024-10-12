@@ -9,7 +9,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Saturday October 12th 2024 2:33:56 am
+Last Modified: Friday October 11th 2024 4:31:23 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -33,7 +33,7 @@ from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, Ablat
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-from project.utils.grad_cam_2D import GradCAM_2D
+from project.utils.grad_cam.grad_cam_2D import GradCAM_2D
 # *-----------新增 Pyotrch-Gard-Cam------------*
 
 class Encoder3DCNN(nn.Module):
