@@ -1,13 +1,19 @@
 import numpy as np
 import torch
-import torch.nn.functional as F
 
 from typing import Tuple, List
-from project.utils.base_cam_2D import BaseCAM_2D
+from pytorch_grad_cam.base_cam import BaseCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 
-class GradCAM_2D(BaseCAM_2D):
+class GradCAM_2D(BaseCAM):
+    """
+    GradCAM implementation for 2D images.
+    The source code copy from pytorch-grad-cam.
+
+    Args:
+        BaseCAM_2D (_type_): _description_
+    """    
     def __init__(self, model, target_layers,
                  reshape_transform=None):
         super(

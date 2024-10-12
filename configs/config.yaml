@@ -3,25 +3,24 @@ hydra:
   run:
     dir: ${train.log_path}
 
-# TODO: the root path should be modified
-root: '/workspace/SeqX2Y_PyTorch'
+# root: '/workspace/SeqX2Y_PyTorch'
 
 # test dataset configs
 test:
-  data: '{root}/test/public_data/LUNA_imaging.npz'
-  mask: '{root}/test/public_data/LUNA_mask.npz'
-  rpm: '{root}/test/public_data/rpm_max.csv'
+  data: '$test/public_data/LUNA_imaging.npz'
+  mask: 'test/public_data/LUNA_mask.npz'
+  rpm: 'test/public_data/rpm_max.csv'
   # ckpt: '{root}/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
   # ckpt: '{root}/logs/2024-01-18/00-09-22/tensorboard_logs/version_0/checkpoints/epoch=96-val_loss=0.35.ckpt'
-  ckpt: '{root}/logs/2024-01-18/128_logs/tensorboard_logs/version_0/checkpoints/epoch=90-val_loss=0.41.ckpt'
-  log_path: '{root}/logs/test_POPIresults/'
+  ckpt: 'logs/2024-01-18/128_logs/tensorboard_logs/version_0/checkpoints/epoch=90-val_loss=0.41.ckpt'
+  log_path: 'logs/test_POPIresults/'
 
 # train configs
 train:
   # model hyper-parameters
   # model: 'resnet' # , choices=['resnet', 'csn', 'r2plus1d', 'x3d', 'slowfast', 'c2d', 'i3d'])
   batch_size: 1 # same as paper 
-  log_path: '{root}/logs/${now:%Y-%m-%d}/${now:%H-%M-%S}' # log save path
+  log_path: 'logs/${now:%Y-%m-%d}/${now:%H-%M-%S}' # log save path
   max_epochs: 200
   gpu_num: 0 # [0, 1]
   seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.

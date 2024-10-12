@@ -5,10 +5,10 @@ Created Date: 2023-08-11 03:46:36
 Author: chenkaixu
 -----
 Comment:
-This project were based the pytorch, pytorch lightning and pytorch video library, 
+This project were based the pytorch, pytorch lightning and pytorch video library,
 for rapid development.
 The project to predict Lung figure motion trajectory.
- 
+
 Have a good code time!
 -----
 Last Modified: Friday October 11th 2024 1:04:43 pm
@@ -50,7 +50,6 @@ from omegaconf import DictConfig
 # %%
 # @hydra.main(version_base=None, config_path="/home/ec2-user/SeqX2Y_PyTorch/configs", config_name="config.yaml")
 def train(hparams: DictConfig):
-
     # set seed
     seed_everything(42, workers=True)
 
@@ -65,45 +64,34 @@ def train(hparams: DictConfig):
         save_dir=hparams.train.log_path, name="tensorboard_logs"
     )
 
-    lr_logger = lr_monitor.LearningRateMonitor(logging_interval="step")
-
-    # some callbacks
-    progress_bar = TQDMProgressBar(refresh_rate=100)
-    rich_model_summary = RichModelSummary(max_depth=2)
-
-    # define the checkpoint becavier.
-    model_check_point = ModelCheckpoint(
-        filename="{epoch}-{val_loss:.2f}",
-        auto_insert_metric_name=True,
-        monitor="val_loss",
-        mode="min",
-        save_last=True,
-        save_top_k=3,
-    )
-
-    # bolts callbacks
-    table_metrics_callback = PrintTableMetricsCallback()
-    monitor = TrainingDataMonitor(log_every_n_steps=1)
+    callbacks = [
+        lr_monitor.LearningRateMonitor(logging_interval="step"),
+        TQDMProgressBar(refresh_rate=100),
+        RichModelSummary(max_depth=2),
+        # define the checkpoint becavier.
+        ModelCheckpoint(
+            filename="{epoch}-{val_loss:.2f}",
+            auto_insert_metric_name=True,
+            monitor="val_loss",
+            mode="min",
+            save_last=True,
+            save_top_k=3,
+        ),
+        # bolts callbacks
+        PrintTableMetricsCallback(),
+        # monitor = TrainingDataMonitor(log_every_n_steps=1)
+    ]
 
     trainer = Trainer(
-        devices=[
-            hparams.train.gpu_num,
-        ],
+        devices=[hparams.train.gpu_num,],
         accelerator="gpu",
         max_epochs=hparams.train.max_epochs,
         logger=tb_logger,
         check_val_every_n_epoch=1,
-        callbacks=[
-            progress_bar,
-            rich_model_summary,
-            table_metrics_callback,
-            model_check_point,
-            lr_logger,
-        ],  # 去掉monitor
+        callbacks=callbacks,
     )
 
     trainer.fit(ConvLSTMmodel, data_module)
-
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config.yaml")
 def init_params(config):
@@ -115,7 +103,6 @@ def init_params(config):
 
 # %%
 if __name__ == "__main__":
-
     logging.info("Training Start!")
     init_params()
     # train()

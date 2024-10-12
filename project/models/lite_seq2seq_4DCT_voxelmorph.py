@@ -8,8 +8,9 @@ File: lite_seq2seq_4DCT_voxelmorph.py
 Comment:
 Delete 2 layers of ConvLSTM compare to seq2seq_4DCT_voxelmorph.py
 -----
-Last Modified: 2023-11-30 
+Last Modified: Friday October 11th 2024 12:58:32 pm
 '''
+
 import torch
 import torch.nn as nn
 

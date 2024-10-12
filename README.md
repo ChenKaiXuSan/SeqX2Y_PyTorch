@@ -44,29 +44,38 @@ cd  SeqX2Y_PyTorch/
 4. run the code.
 
 ``` bash  
-python project/main.py
+python -m project.main [config_file]
 ```
 
-have a cup of coffee and wait for the result.
+📓 We recomend to use **python module** to run the script.
+
+Have a cup of coffee and wait for the result. 😄
 
 `
 A pretrained model as well as a set of 20 breathing traces and LUNA public CT dataset can be downloaded [here](https://zenodo.org/record/7730879). Once the data is downloaded, unpack the **pretrained_model.zip** into the **trained_model** folder and unpack **LUNA_imaging.zip** and **LUNA_mask.zip** into the **public_data** folder. Finally, test code can be run using the **test_LUNA.py** script to generate 10 phases, DVF, and the deformed masks. The resuts will be generated in the results folder. The final results from the test run can also be found [here](https://zenodo.org/record/7730879). 
 `
 
 
-## Folde Tree 
+## Folder Structure
 ``` bash
 .
-|-- configs
-|   `-- data
-|-- images
-|-- logs
-|-- project
-|   `-- models
-`-- test
-    |-- bak
-    `-- public_data
-
+├── configs
+│   ├── data
+│   └── optimizer
+├── docker
+├── images
+├── logs
+├── project
+│   ├── dataloader
+│   │   └── __pycache__
+│   ├── models
+│   │   └── __pycache__
+│   ├── __pycache__
+│   └── utils
+│       └── __pycache__
+└── test
+    └── bak
+    
 ```
 
 ## Dataset 

@@ -1,7 +1,7 @@
 # 4DCT
 data_path: "/mnt/dataset/ouyang/dataset/024/POPI_seq3_024" 
 val_data_path: "/mnt/dataset/ouyang/dataset/024/POPI_valseq3_024" 
-num_workers: 0
+num_workers: 8
 img_size: 128 # 128 # 224
 
 data_path2D: "/mnt/dataset/ouyang/dataset/024/POPI_seq3_2D_024" 

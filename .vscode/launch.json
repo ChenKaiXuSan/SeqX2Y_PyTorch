@@ -21,7 +21,7 @@
             "cwd": "${workspaceFolder}",
             "module": "project.main",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
                 "train.batch_size=1"
             ]

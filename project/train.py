@@ -10,7 +10,7 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Friday October 11th 2024 1:04:43 pm
+Last Modified: Friday October 11th 2024 4:31:23 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
@@ -36,17 +36,17 @@ from torchmetrics import classification
 from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
-import matplotlib.pyplot as plt
-import torch.nn as nn
+
 from project.utils.grad_cam_2D import GradCAM_2D
 # *-----------新增 Pyotrch-Gard-Cam------------*
 
 # from models.seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 # from models.lite_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
 from project.models.Time_series_seq2seq_4DCT_voxelmorph import EncoderDecoderConvLSTM
+from project.models.Time_series_seq2seq_4DCT_GradCam import EncoderDecoderConvLSTM
 from project.models.Warp import Warp
 from project.utils.image_saver import save_dvf_image, save_bat_pred_image, save_sitk_images, save_sitk_DVF_images
-from project.loss_analyst import *
+from project.loss_analyst import calculate_train_loss, calculate_val_loss
    
 # %%
 class PredictLightningModule(LightningModule):
@@ -199,14 +199,15 @@ class PredictLightningModule(LightningModule):
 
             # *-----------新增 Pyotrch-Gard-Cam------------*   
             # 定义输入图像张量（例如x是输入张量）
-            input_tensor = [invol, batch_2D]  # 根据你的输入数据调整
+            input_tensor = [invol, time_series_img]  # 根据你的输入数据调整
             
             # 选择目标类（对于分类任务，一般是类别索引）, 这里需要根据你的任务修改，假设使用类索引0
             # targets = [ClassifierOutputTarget(0)]  # 示例：类别索引为0
             targets = [bat_pred[:, :, :, :, 64, :].mean()]
            
             # 计算目标层的Grad-CAM
-            grayscale_cam = cam(input_tensor=input_tensor, targets=targets, future_seq=self.seq)
+            # TODO: 这里需要修改，根据你的实际输入数据调整
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
            
             # 将Grad-CAM灰度图映射到原图像上以进行可视化, 你需要根据实际的输入图像进行映射
             visualization = show_cam_on_image(time_series_fat_encoder, grayscale_cam, use_rgb=True)
@@ -264,6 +265,16 @@ class PredictLightningModule(LightningModule):
         #Draw image
         # draw_image(average_ssim, average_ncc, average_dice)
 
+    def test_step(self, batch: torch.Tensor, batch_idx: int):
+        """
+        考虑在这里进行测试步骤，从val step中分割出来
+
+        Args:
+            batch (torch.Tensor): batch data
+            batch_idx (int): batch index
+        """
+
+        pass
 
     def configure_optimizers(self):
         '''

@@ -10,7 +10,7 @@ Use a 4D CT dataset, and us SimpleITK to laod the Dicom medical image.
 
 Have a good code time!
 -----
-Last Modified: Friday October 11th 2024 1:04:43 pm
+Last Modified: Friday October 11th 2024 4:31:23 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
@@ -243,7 +243,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
-                split_image_sixteenths, # 1/16
+                # split_image_sixteenths, # 1/16
                 # zero2one,
             ]
         )
@@ -256,7 +256,7 @@ class CTDataModule(LightningDataModule):
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
                 # split_image_quarters,
-                split_image_sixteenths, # 1/16
+                # split_image_sixteenths, # 1/16
                 # zero2one,
             ]
         )
