@@ -73,15 +73,15 @@ def split_image_quarters(img):
     bottom_left = img[:, height_middle_index:, :width_middle_index]
     bottom_right = img[:, height_middle_index:, width_middle_index:]
     save_image(img, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/img.png')
-    top_right = top_right - top_right.min()
-    top_right = top_right / top_right.max()
-    save_image(top_right, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/bottom_right.png')
-    save_image(Resize(size=[128, 128])(top_right), '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_bottom_right.png')
+    top_left = top_left - top_left.min()
+    top_left = top_left / top_left.max()
+    save_image(top_left, '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/bottom_right.png')
+    save_image(Resize(size=[128, 128])(top_left), '/workspace/SeqX2Y_PyTorch/test/Imageresult/Resize2D/Resized_bottom_right.png')
     
     # Concatenate along the channel dimension
     # This results in a tensor with 4x the number of channels of the input
     # return torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
-    return Resize(size=[128, 128])(top_right)
+    return Resize(size=[128, 128])(top_left)
 
 class CT_normalize(torch.nn.Module):
     """ CT normalize function for the CT image.
@@ -199,7 +199,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)),
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                split_image_quarters,
+                # split_image_quarters,
             ]
         )
 
@@ -210,7 +210,7 @@ class CTDataModule(LightningDataModule):
                 Normalize((0.45), (0.225)), 
                 lambda x: x/255.0,
                 # split_image_half,  # Add the split image function here
-                split_image_quarters,
+                # split_image_quarters,
             ]
         )
 

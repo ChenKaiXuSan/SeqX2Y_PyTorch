@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
+Last Modified: Monday July 22nd 2024 9:26:57 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
@@ -146,9 +146,9 @@ class EncoderDecoderConvLSTM(nn.Module):
             assert len(h_t5.shape) == len(time_series_fat.shape), "the dimension of h_t5 and batch_2D_encoded is not same."
 
             # fuse the 4DCT feature and time series feature, for encoder
-            encoder_vector = h_t5 @ time_series_fat
-            # encoder_vector = h_t5 + time_series_fat
-            encoder_vector = h_t5
+            # encoder_vector = h_t5 @ time_series_fat
+            encoder_vector = h_t5 + time_series_fat # 改成相加
+            # encoder_vector = h_t5
 
         for t in range(future_step): # 这里不用改成future_step-1
 
@@ -164,9 +164,9 @@ class EncoderDecoderConvLSTM(nn.Module):
             assert len(h_t7.shape) == len(time_series_fat.shape), "the dimension of h_t7 and batch_2D_encoded is not same."
 
             # fuse the 4DCT feature and time series feature, for decoder
-            decoder_vector = h_t7 @ time_series_fat
-            # decoder_vector = h_t7 + time_series_fat
-            decoder_vector = h_t7
+            # decoder_vector = h_t7 @ time_series_fat
+            decoder_vector = h_t7 + time_series_fat # 改成相加
+            # decoder_vector = h_t7
 
             latent += [decoder_vector]
             # 了解到 h_t7 是一个形状为 torch.Size([1, 96, 35, 60, 70]) 的张量后，这行代码 latent += [h_t7] 的操作意味着将这个五维张量作为一个元素添加到名为 latent 的列表中。在这个上下文中，latent 可能被用来收集一系列的张量，每个张量可能代表不同时间步的潜在表示或特征图。通过这种方式，可以在列表中追踪并存储多个时间步的状态。
