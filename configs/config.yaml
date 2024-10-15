@@ -7,7 +7,7 @@ hydra:
 test:
   data: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_imaging.npz'
   mask: '/workspace/SeqX2Y_PyTorch/test/public_data/LUNA_mask.npz'
-  rpm: '/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv'
+  rpm: '/mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv'
   # ckpt: '/workspace/SeqX2Y_PyTorch/test/public_data/New_4DCT_epoch00141_train_loss0.0006_.model'
   # ckpt: '/workspace/SeqX2Y_PyTorch/logs/2024-01-18/00-09-22/tensorboard_logs/version_0/checkpoints/epoch=96-val_loss=0.35.ckpt'
   ckpt: '/workspace/SeqX2Y_PyTorch/logs/2024-01-18/128_logs/tensorboard_logs/version_0/checkpoints/epoch=90-val_loss=0.41.ckpt'

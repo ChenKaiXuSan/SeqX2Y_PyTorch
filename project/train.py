@@ -208,7 +208,7 @@ class PredictLightningModule(LightningModule):
 #------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
         # Reading RPM #
-        with open('/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+        with open('/mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
             data = list(csv.reader(f, delimiter=","))        
         RPM = np.array(data)
         RPM = np.float32(RPM)
@@ -377,7 +377,7 @@ class PredictLightningModule(LightningModule):
 #------------------------- New ---------------------------------
         b, seq, c, vol, h, w = batch.size()
         # Reading RPM #
-        with open('/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
+        with open('/mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv', 'r', encoding='utf-8-sig') as f:  # 使用'utf-8-sig'来自动处理BOM
             data = list(csv.reader(f, delimiter=","))        
         RPM = np.array(data)
         RPM = np.float32(RPM)
