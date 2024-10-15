@@ -10,8 +10,8 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday January 17th 2024 9:50:54 am
-Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
+Last Modified: Friday October 11th 2024 1:04:43 pm
+Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2024 The University of Tsukuba
 -----
@@ -23,7 +23,6 @@ Date      	By	Comments
 '''
 import torch
 import torch.nn.functional as F
-import torchmetrics
 from torchmetrics import StructuralSimilarityIndexMeasure as SSIM
 import matplotlib.pyplot as plt
 # use [ctrl + shift + 2] to insert function description
@@ -155,8 +154,6 @@ def calculate_tre(points_pred, points_true):
     # 计算点对之间的欧氏距离
     tre = torch.sqrt(torch.sum((points_pred - points_true) ** 2, dim=1))
     return torch.mean(tre)
-
-
 
 
 

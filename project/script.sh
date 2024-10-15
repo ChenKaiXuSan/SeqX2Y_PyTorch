@@ -50,7 +50,7 @@ do
     # 调用训练脚本并传递临时配置文件
     
     # python $TRAIN_SCRIPT --config-name $TEMP_CONFIG
-    python $TRAIN_SCRIPT 
+    python $TRAIN_SCRIPT train.counter=$i
 done
 
 echo "交叉验证完成"

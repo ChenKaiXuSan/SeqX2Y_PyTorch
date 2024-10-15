@@ -21,9 +21,11 @@
             "cwd": "${workspaceFolder}",
             "module": "project.main",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args": [
-                "train.batch_size=1"
+                "train.batch_size=1",
+                "data.img_size=64", // change image size 
+                "train.vol=64", //change vol size
             ]
         }
     ]

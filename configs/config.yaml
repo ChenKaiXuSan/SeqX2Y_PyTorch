@@ -27,6 +27,8 @@ train:
 
   vol: 128
 
+  counter: 0
+
 # group by defaults
 defaults:
   - optimizer: adam

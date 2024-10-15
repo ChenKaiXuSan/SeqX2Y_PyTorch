@@ -35,5 +35,4 @@ class ActivationsAndGradients2D(ActivationsAndGradients):
         time_series_img = input_tensor["time_series_img"]
         future_seq = input_tensor["future_seq"]
 
-
         return self.model(invol, time_series_img, future_seq)

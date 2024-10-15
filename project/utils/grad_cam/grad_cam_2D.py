@@ -40,12 +40,26 @@ class GradCAM_2D(BaseCAM):
                 "Shape of grads should be 4 (2D image) or 5 (3D image)."
             )
 
+    def get_target_width_height(self, input_tensor: torch.Tensor) -> Tuple[int, int]:
+
+        invol = input_tensor["invol"]
+        time_series_img = input_tensor["time_series_img"]
+        future_seq = input_tensor["future_seq"]
+
+        try:
+            depth, width, height = time_series_img.size(-3), time_series_img.size(-2), time_series_img.size(-1)
+
+            return depth, width, height
+        
+        except:
+            raise ValueError("Invalid input_tensor shape.")
+
     def compute_cam_per_layer(
         self, input_tensor: torch.Tensor, targets: List[torch.nn.Module], eigen_smooth: bool
     ) -> np.ndarray:
         activations_list = [a.cpu().data.numpy() for a in self.activations_and_grads.activations]
         grads_list = [g.cpu().data.numpy() for g in self.activations_and_grads.gradients]
-        target_size = self.get_target_width_height(input_tensor)
+        target_size = self.get_target_width_height(input_tensor) # depth, width, height
 
         cam_per_target_layer = []
         # Loop over the saliency image from every layer
@@ -73,11 +87,11 @@ class GradCAM_2D(BaseCAM):
     ) -> np.ndarray:
         
         invol = input_tensor["invol"].requires_grad_(True)
-        time_series_img = input_tensor["time_series_img"]
+        # time_series_img = input_tensor["time_series_img"].requires_grad_(True)  
         future_seq = input_tensor["future_seq"]
         
-        bat_pred = targets["bat_pred"].requires_grad_(True)
-        DVF = targets["DVF"].requires_grad_(True)
+        # bat_pred = targets["bat_pred"].requires_grad_(True)
+        # DVF = targets["DVF"].requires_grad_(True)
 
         if self.compute_input_gradient:
             input_tensor = torch.autograd.Variable(input_tensor, requires_grad=True)
@@ -90,12 +104,11 @@ class GradCAM_2D(BaseCAM):
                 ClassifierOutputTarget(category) for category in target_categories
             ]
 
-        # if self.uses_gradients:
-        # FIXME: the loss need grad_fn
-        #     self.model.zero_grad()
-        #     loss, *_ = calculate_val_loss(bat_pred, DVF, invol, future_seq)
-        #     # loss = sum([target(output) for target, output in zip(targets, outputs)])
-        #     loss.backward(retain_graph=True)
+        if self.uses_gradients:
+            self.model.zero_grad()
+            loss, *_ = calculate_val_loss(outputs[0], outputs[1], invol, future_seq)
+            # loss = sum([target(output) for target, output in zip(targets, outputs)])
+            loss.backward(retain_graph=True)
 
         # In most of the saliency attribution papers, the saliency is
         # computed with a single target layer.
@@ -106,6 +119,7 @@ class GradCAM_2D(BaseCAM):
         # This gives you more flexibility in case you just want to
         # use all conv layers for example, all Batchnorm layers,
         # or something else.
+        # TODO: 这里有问题，需要修改
         cam_per_layer = self.compute_cam_per_layer(input_tensor, targets, eigen_smooth)
         return self.aggregate_multi_layers(cam_per_layer)
 
@@ -117,14 +131,25 @@ class GradCAM_2D(BaseCAM):
         eigen_smooth: bool = False,
     ) -> np.ndarray:
         """
+        call the forward method to compute the Grad-CAM.
+
+        Args:
+            input_tensor (dict[str, torch.Tensor]): input tensor, with keys "invol", "time_series_img", "future_seq".
+            targets (dict[str, torch.nn.Module]): target, with keys "bat_pred", "DVF".
+            aug_smooth (bool, optional): _description_. Defaults to False.
+            eigen_smooth (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            np.ndarray: _description_
+        """    
+        """
         Modify forward to support input_tensor as a List of Tensors.
         """
 
         if aug_smooth is True:
-            # FIXME: not implemented with list
+            # TODO: not implemented in this time
             return self.forward_augmentation_smoothing(
                 input_tensor, targets, eigen_smooth
             )
 
-        # TODO: 为了在里面计算loss，需要invol，time_series_img，future_seq，bat_pred, DVF
         return self.forward(input_tensor, targets, eigen_smooth)

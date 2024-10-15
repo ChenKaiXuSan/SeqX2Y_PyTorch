@@ -27,10 +27,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 import time
-# from utils import counter  # Import the global counter
-
-# counter.py
-timestamp_counter = 0  # Initialize a single counter
 
 # save the dvf.png for test
 def save_dvf_image(DVF, batch_idx, savepath):
@@ -50,62 +46,53 @@ def save_bat_pred_image(bat_pred, batch_idx, savepath):
 
 # save the inhale_predict.nrrd
 def save_sitk_images(bat_pred, batch_idx, savepath):
-    counter.timestamp_counter += 1 
 
     # Only save when the timestamp counter reaches the 10 and 200
-    if counter.timestamp_counter in [601, 602, 603]: # 3个的情况 (n-4)/3=199，2个的情况 (n-3)/2=199
-        timestamp = time.strftime("%Y%m%d-%H%M%S")  # Add a timestamp to avoid overwriting
-        BAT_PRED = bat_pred.cpu().detach().numpy()  # Convert to numpy array once and use it
-        BAT_PRED = np.squeeze(BAT_PRED)
-        writer = sitk.ImageFileWriter()
-        for i in range(3):  # Assuming 3 phases as in your example
-            img_array = np.squeeze(BAT_PRED[i, ...])
-            # 以下为新保存, Use batch_idx and timestamp to ensure unique filenames
-            output_dir = os.path.join(savepath, f"{batch_idx:03d}_{timestamp}")
-            os.makedirs(output_dir, exist_ok=True)
-            writer.SetFileName(os.path.join(output_dir, f"inhale{i+1}_predict.nrrd"))
-            # 以上为新保存
-            # writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"inhale{i+1}_predict.nrrd")) # 旧的保存，只能保存000会覆盖
-            writer.Execute(sitk.GetImageFromArray(img_array))
-        print(f"Saved inhale prediction at batch {batch_idx}, timestamp {timestamp}")
-        # Reset the counter after saving
-        # counter.timestamp_counter = 0
+    timestamp = time.strftime("%Y%m%d-%H%M%S")  # Add a timestamp to avoid overwriting
+    BAT_PRED = bat_pred.cpu().detach().numpy()  # Convert to numpy array once and use it
+    BAT_PRED = np.squeeze(BAT_PRED)
+    writer = sitk.ImageFileWriter()
+    for i in range(3):  # Assuming 3 phases as in your example
+        img_array = np.squeeze(BAT_PRED[i, ...])
+        # 以下为新保存, Use batch_idx and timestamp to ensure unique filenames
+        output_dir = os.path.join(savepath, f"{batch_idx:03d}_{timestamp}")
+        os.makedirs(output_dir, exist_ok=True)
+        writer.SetFileName(os.path.join(output_dir, f"inhale{i+1}_predict.nrrd"))
+        # 以上为新保存
+        # writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"inhale{i+1}_predict.nrrd")) # 旧的保存，只能保存000会覆盖
+        writer.Execute(sitk.GetImageFromArray(img_array))
+    print(f"Saved inhale prediction at batch {batch_idx}, timestamp {timestamp}")
 
-# save the dvf.nrrd
+# save the dvf.nrrd 
 def save_sitk_DVF_images(DVF, batch_idx, savepath):
-    counter.timestamp_counter += 1  # Increment the counter every time the function is called
 
     # Only save when the timestamp counter reaches the 10 and 200
-    if counter.timestamp_counter in [601, 602, 603]: # 3个的情况 (n-4)/3=199，2个的情况 (n-3)/2=199
-        timestamp = time.strftime("%Y%m%d-%H%M%S")  # Add a timestamp to avoid overwriting
-        # Permute DVF & Save DVF
-        def dvf_(d):
-            x = d[0,...]
-            x = np.reshape(x, [1,128, 128, 128])
-            y = d[1,...]
-            y = np.reshape(y, [1,128, 128, 128])
-            z = d[2,...]
-            z = np.reshape(z, [1,128, 128, 128])
-            out = np.concatenate([z,y,x],0)
-            return out
-        
-        Dvf = DVF.cpu().detach().numpy()  # Convert to numpy array
-        Dvf = np.squeeze(Dvf)  # Remove singleton dimensions
-        
-        for i in range(3):  # Assuming 3 phases as in your example
-            DVF_img = dvf_(Dvf[:, i, ...])
-            writer = sitk.ImageFileWriter()
-            # 以下为新保存, Use batch_idx and timestamp to ensure unique filenames
-            output_dir = os.path.join(savepath, f"{batch_idx:03d}_{timestamp}")
-            os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
-            writer.SetFileName(os.path.join(output_dir, f"DVF{i+1}.nrrd"))
-            # 以上为新保存
-            # writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"DVF{i+1}.nrrd")) # 旧的保存，只能保存000会覆盖
-            writer.Execute(sitk.GetImageFromArray(np.transpose(DVF_img,[1,2,3,0])))
-        print(f"Saved DVF at batch {batch_idx}, timestamp {timestamp}")
-        # Reset the counter after saving
-        # counter.timestamp_counter = 0
-
+    timestamp = time.strftime("%Y%m%d-%H%M%S")  # Add a timestamp to avoid overwriting
+    # Permute DVF & Save DVF
+    def dvf_(d):
+        x = d[0,...]
+        x = np.reshape(x, [1,128, 128, 128])
+        y = d[1,...]
+        y = np.reshape(y, [1,128, 128, 128])
+        z = d[2,...]
+        z = np.reshape(z, [1,128, 128, 128])
+        out = np.concatenate([z,y,x],0)
+        return out
+    
+    Dvf = DVF.cpu().detach().numpy()  # Convert to numpy array
+    Dvf = np.squeeze(Dvf)  # Remove singleton dimensions
+    
+    for i in range(3):  # Assuming 3 phases as in your example
+        DVF_img = dvf_(Dvf[:, i, ...])
+        writer = sitk.ImageFileWriter()
+        # 以下为新保存, Use batch_idx and timestamp to ensure unique filenames
+        output_dir = os.path.join(savepath, f"{batch_idx:03d}_{timestamp}")
+        os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
+        writer.SetFileName(os.path.join(output_dir, f"DVF{i+1}.nrrd"))
+        # 以上为新保存
+        # writer.SetFileName(os.path.join(savepath, f"{batch_idx:03d}", f"DVF{i+1}.nrrd")) # 旧的保存，只能保存000会覆盖
+        writer.Execute(sitk.GetImageFromArray(np.transpose(DVF_img,[1,2,3,0])))
+    print(f"Saved DVF at batch {batch_idx}, timestamp {timestamp}")
 
 # ------------------------------------------------------------------------
         # # save DVF img
