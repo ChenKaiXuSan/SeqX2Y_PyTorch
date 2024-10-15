@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义数据集基本路径
-BASE_PATH="/home/ec2-user/SeqX2Y_PyTorch/dataset/579"
+BASE_PATH="/mnt/dataset/ouyang/dataset/579"
 
 # 定义训练脚本的路径
 TRAIN_SCRIPT="/home/ec2-user/SeqX2Y_PyTorch/project/main.py"
@@ -25,7 +25,7 @@ do
     TRAIN_PATHS_2D=()
     VAL_PATH_4D="$BASE_PATH/POPI_seq3_579/4DCT-Dicom$i"
     VAL_PATH_2D="$BASE_PATH/POPI_seq3_2D_579/2DCT-$i"
-    PATH_1D="/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv"
+    PATH_1D="/mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv"
 
     for j in $(seq 1 $NUM_PATIENTS)
     do

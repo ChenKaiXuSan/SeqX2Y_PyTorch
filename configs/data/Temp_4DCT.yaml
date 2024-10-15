@@ -1,0 +1,21 @@
+# 4DCT
+data_path: "/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom1,/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom3,/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom4,/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom5,/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom6" 
+val_data_path: "/mnt/dataset/ouyang/dataset/579/POPI_seq3_579/4DCT-Dicom2" 
+num_workers: 0
+img_size: 128 # 128 # 224
+
+data_path2D: "/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-1,/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-3,/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-4,/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-5,/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-6" 
+val_data_path2D: "/mnt/dataset/ouyang/dataset/579/POPI_seq3_2D_579/2DCT-2" 
+
+data_path1D: "/mnt/dataset/ouyang/dataset/Diagram_Coordinates/1D_rpm.csv"
+
+# # 4DCT
+# data_path: /home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom1,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom2,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom3,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom4,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom5
+# val_data_path: /home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_579/4DCT-Dicom6
+# num_workers: 0
+# img_size: 128 # 128 # 224
+
+# data_path2D: /home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-1,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-2,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-3,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-4,/home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-5 
+# val_data_path2D: /home/ec2-user/SeqX2Y_PyTorch/dataset/579/POPI_seq3_2D_579/2DCT-6 
+
+# data_path1D: /home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv
