@@ -31,7 +31,7 @@ test_tube_exp/
 tests/tests_tt_dir/
 tests/save_dir
 default/   
-data/
+# data/
 test_tube_logs/
 test_tube_data/
 datasets/
@@ -66,15 +66,6 @@ coverage.xml
 # Translations
 *.mo
 *.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-
-# Flask stuff:
-instance/
-.webassets-cache
 
 # Scrapy stuff:
 .scrapy
@@ -121,7 +112,6 @@ venv.bak/
 
 # IDEs
 .idea
-.vscode
 
 # seed project
 lightning_logs/
