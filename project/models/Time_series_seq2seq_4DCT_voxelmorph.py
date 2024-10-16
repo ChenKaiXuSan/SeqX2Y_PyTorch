@@ -143,7 +143,9 @@ class EncoderDecoderConvLSTM(nn.Module):
                                    cur_state = [h_t5,c_t5])
             
  #------------------myself add 1d rpm --------------------------------------------------            
-            h_t5 = torch.mul(h_t5,torch.squeeze(rpm_tensor[t])) # from back to front
+            # h_t5 = torch.mul(h_t5,torch.squeeze(rpm_tensor[t])) # from back to front
+            h_t5 = h_t5 * torch.squeeze(rpm_tensor[t])
+            
             # rpm_tensor = rpm_tensor.reshape(1, 3, 1, 1, 1)
             # h_t5 = torch.mul(h_t5,torch.squeeze(rpm_tensor[:, :-1, ...]))
             encoder_vector = h_t5
@@ -182,7 +184,9 @@ class EncoderDecoderConvLSTM(nn.Module):
 #------------------nadeemlab ORG--注意：原本的No2D中不需要解开此代码------------------------
             # rpm_tensor = rpm_tensor.reshape(1, 3, 1, 1, 1)
             # h_t7 = torch.mul(h_t7, torch.squeeze(rpm_tensor[:, 1:, ...]))
-            h_t7 = torch.mul(h_t7, torch.squeeze(rpm_tensor[t]))
+
+            # h_t7 = torch.mul(h_t7, torch.squeeze(rpm_tensor[t]))
+            h_t7 = h_t7 * torch.squeeze(rpm_tensor[t])
 #------------------nadeemlab ORG--注意：原本的No2D中不需要解开此代码------------------------
             # Simple multiplication between rpm and later phase features
             encoder_vector = h_t7
