@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "Seq2Seq",
+			"path": "../"
+		},
+		{
+			"name": "dataset",
+			"path": "/mnt/dataset/ouyang"
+		}
+	]
+}
