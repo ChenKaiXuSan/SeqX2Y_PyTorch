@@ -121,7 +121,7 @@ venv.bak/
 
 # IDEs
 .idea
-.vscode
+# .vscode
 
 # seed project
 lightning_logs/
