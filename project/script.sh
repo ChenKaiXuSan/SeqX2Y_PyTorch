@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义数据集基本路径
-BASE_PATH="/home/ec2-user/SeqX2Y_PyTorch/dataset/579"
+BASE_PATH="/mnt/dataset/ouyang/dataset/579"
 
 # 定义训练脚本的路径
 TRAIN_SCRIPT="/home/ec2-user/SeqX2Y_PyTorch/project/main.py"
