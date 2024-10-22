@@ -17,6 +17,9 @@ HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
 
+21-10-2024	Kaixu Chen	add cala_grad_cam function to calculate the Grad-CAM for the given input tensor and target categories.
+                        the input tensor is the 4DCT and the time series image, the target is the bat_pred and DVF.
+
 15-10-2024	Kaixu Chen	delete the useless code and import.
 
 10-01-2024	Kaixu Chen	add the 3D CNN to process the time series 3D image.
@@ -180,6 +183,7 @@ class PredictLightningModule(LightningModule):
                 "future_seq": self.seq,
             },
             target={"bat_pred": bat_pred, "DVF": DVF},
+            save_path=f"{self.logger.save_dir}/Imageresult/{self.counter}/Grad_CAM",
             eigen_smooth=False,
         )
 
@@ -187,17 +191,17 @@ class PredictLightningModule(LightningModule):
         save_sitk_images(
             ct_data,
             batch_idx,
-            f"/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/{self.counter}/GT",
+            f"{self.logger.save_dir}/Imageresult/{self.counter}/GT",
         )  # save GT img 1
         save_sitk_images(
             bat_pred,
             batch_idx,
-            f"/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/{self.counter}/Pred",
+            f"{self.logger.save_dir}/Imageresult/{self.counter}/Pred",
         )  # save pred img 2
         save_sitk_DVF_images(
             DVF,
             batch_idx,
-            f"/home/ec2-user/SeqX2Y_PyTorch/test/Imageresult/{self.counter}/DVF",
+            f"{self.logger.save_dir}/Imageresult/{self.counter}/DVF",
         )  # save DVF img 3
 
         # calculate the validation loss
@@ -262,8 +266,9 @@ class PredictLightningModule(LightningModule):
     def _get_name(self):
         return self.model
 
+    @staticmethod
     @torch.enable_grad()
-    def calc_grad_cam(self, model, input_tensor, target, eigen_smooth=False):
+    def calc_grad_cam(model, input_tensor, target, save_path, eigen_smooth=False):
         """
         Calculate the Grad-CAM for the given input tensor and target categories.
 
@@ -310,7 +315,7 @@ class PredictLightningModule(LightningModule):
         grayscale_cam = torch.mean(torch.from_numpy(grayscale_cam.squeeze()), dim=-1).numpy()
 
         plt.imsave(
-            "visualization.png",
+            f"{save_path}/visualization.png",
             grayscale_cam,
         )
 

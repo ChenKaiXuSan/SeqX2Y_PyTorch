@@ -57,6 +57,8 @@ class GradCAM_2D(BaseCAM):
     def compute_cam_per_layer(
         self, input_tensor: torch.Tensor, targets: List[torch.nn.Module], eigen_smooth: bool
     ) -> np.ndarray:
+        # TODO: 这边有问题。首先activations_list和grads_list的长度不相等，但是原本应该是相等的才对
+        # TODO：其次，之后根据input_tensor来进行形状变化的逻辑也比较奇怪
         activations_list = [a.cpu().data.numpy() for a in self.activations_and_grads.activations]
         grads_list = [g.cpu().data.numpy() for g in self.activations_and_grads.gradients]
         target_size = self.get_target_width_height(input_tensor) # depth, width, height

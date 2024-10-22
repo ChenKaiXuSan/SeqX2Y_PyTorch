@@ -15,7 +15,7 @@
         //     "justMyCode": true
         // },
         {
-            "name": "split_model",
+            "name": "grad_cam",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",
