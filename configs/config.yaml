@@ -25,7 +25,7 @@ train:
   gpu_num: 0 # [0, 1]
   seq: 3 #4 #6 #3 # predict sequence for one patient. large num will occur OOM.
 
-  vol: 128
+  vol: 32 #128
 
   counter: 0
 

@@ -24,8 +24,8 @@
             "justMyCode": false,
             "args": [
                 "train.batch_size=1",
-                "data.img_size=64", // change image size 
-                "train.vol=64", //change vol size
+                "data.img_size=32", // change image size 
+                "train.vol=32", //change vol size
             ]
         }
     ]

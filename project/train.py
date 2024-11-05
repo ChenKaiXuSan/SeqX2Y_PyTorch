@@ -314,6 +314,9 @@ class PredictLightningModule(LightningModule):
         # 可视化或保存CAM结果
         grayscale_cam = torch.mean(torch.from_numpy(grayscale_cam.squeeze()), dim=-1).numpy()
 
+        if not os.path.exists(save_path):
+            os.makedirs(save_path, exist_ok=True)
+
         plt.imsave(
             f"{save_path}/visualization.png",
             grayscale_cam,

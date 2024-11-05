@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # 定义数据集基本路径
-BASE_PATH="/home/ec2-user/SeqX2Y_PyTorch/dataset/579"
+BASE_PATH="/mnt/dataset/ouyang/dataset/579"
 
 # 定义训练脚本的路径
-TRAIN_SCRIPT="/home/ec2-user/SeqX2Y_PyTorch/project/main.py"
+cd $HOME/SeqX2Y_PyTorch/
+TRAIN_SCRIPT="project.main"
 
 # 定义配置文件的原始路径和临时路径
 CONFIG_TEMPLATE="/home/ec2-user/SeqX2Y_PyTorch/configs/data/4DCT.yaml"
@@ -50,7 +51,7 @@ do
     # 调用训练脚本并传递临时配置文件
     
     # python $TRAIN_SCRIPT --config-name $TEMP_CONFIG
-    python $TRAIN_SCRIPT train.counter=$i
+    python -m $TRAIN_SCRIPT train.counter=$i
 done
 
 echo "交叉验证完成"
