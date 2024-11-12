@@ -1,0 +1,12 @@
+# 4DCT
+data_path: "/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom2,/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom3,/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom4,/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom5,/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom6" 
+val_data_path: "/workspace/data/dataset/579/POPI_seq3_579/4DCT-Dicom1" 
+num_workers: 8
+img_size: 64 # 128 # 224
+
+data_path2D: "/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-2,/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-3,/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-4,/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-5,/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-6" 
+val_data_path2D: "/workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-1" 
+
+
+# /workspace/data/dataset/579/POPI_seq3_2D_579/2DCT-1
+# data_path1D: "/workspace/data/dataset/Diagram_Coordinates/1D_rpm.csv"

@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # 定义数据集基本路径
-BASE_PATH="/mnt/dataset/ouyang/dataset/579"
+# BASE_PATH="/mnt/dataset/ouyang/dataset/579"
+BASE_PATH="/workspace/data/dataset/579"
 
 # 定义训练脚本的路径
 cd $HOME/SeqX2Y_PyTorch/
 TRAIN_SCRIPT="project.main"
 
 # 定义配置文件的原始路径和临时路径
-CONFIG_TEMPLATE="/home/ec2-user/SeqX2Y_PyTorch/configs/data/4DCT.yaml"
-TEMP_CONFIG="/home/ec2-user/SeqX2Y_PyTorch/configs/data/Temp_4DCT.yaml"
+CONFIG_TEMPLATE="/workspace/SeqX2Y_PyTorch/configs/data/4DCT.yaml"
+TEMP_CONFIG="/workspace/SeqX2Y_PyTorch/configs/data/Temp_4DCT.yaml"
 
 # 总共有6个患者的数据
 NUM_PATIENTS=6
