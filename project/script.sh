@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义数据集基本路径
-BASE_PATH="/mnt/dataset/ouyang/dataset/579"
+BASE_PATH="/mnt/dataset/ouyang/dataset/468"
 
 # 定义训练脚本的路径
 TRAIN_SCRIPT="/home/ec2-user/SeqX2Y_PyTorch/project/main.py"
@@ -23,16 +23,16 @@ do
     # 生成4DCT和2D和1D数据路径
     TRAIN_PATHS_4D=()
     TRAIN_PATHS_2D=()
-    VAL_PATH_4D="$BASE_PATH/POPI_seq3_579/4DCT-Dicom$i"
-    VAL_PATH_2D="$BASE_PATH/POPI_seq3_2D_579/2DCT-$i"
+    VAL_PATH_4D="$BASE_PATH/POPI_seq3_468/4DCT-Dicom$i"
+    VAL_PATH_2D="$BASE_PATH/POPI_seq3_2D_468/2DCT-$i"
     # PATH_1D="/home/ec2-user/SeqX2Y_PyTorch/dataset/Diagram_Coordinates/1D_rpm.csv"
 
     for j in $(seq 1 $NUM_PATIENTS)
     do
         if [ $j -ne $i ]
         then
-            TRAIN_PATHS_4D+=("$BASE_PATH/POPI_seq3_579/4DCT-Dicom$j")
-            TRAIN_PATHS_2D+=("$BASE_PATH/POPI_seq3_2D_579/2DCT-$j")
+            TRAIN_PATHS_4D+=("$BASE_PATH/POPI_seq3_468/4DCT-Dicom$j")
+            TRAIN_PATHS_2D+=("$BASE_PATH/POPI_seq3_2D_468/2DCT-$j")
         fi
     done
 
