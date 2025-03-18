@@ -64,9 +64,10 @@ A pretrained model as well as a set of 20 breathing traces and LUNA public CT da
 |   `-- dataloader
 |   `-- models
 |   `-- utils
-`-- test
-    |-- bak
-    `-- public_data
+|-- test
+|   `-- bak
+`-- dataset(use your own dataset)
+
 
 ```
 
