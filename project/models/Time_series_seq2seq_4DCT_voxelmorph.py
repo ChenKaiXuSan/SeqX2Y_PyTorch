@@ -4,7 +4,7 @@
 File: /workspace/SeqX2Y_PyTorch/project/models/Time_series_seq2seq_4DCT_voxelmorph.py
 Project: /workspace/SeqX2Y_PyTorch/project/models
 Created Date: Tuesday January 9th 2024
-Author: Kaixu Chen
+Author: Hao Ouyang
 -----
 Comment:
 
