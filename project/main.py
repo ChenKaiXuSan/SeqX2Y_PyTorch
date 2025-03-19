@@ -2,7 +2,7 @@
 File: main.py
 Project: project
 Created Date: 2023-08-11 03:46:36
-Author: chenkaixu
+Author: ouyang hao
 -----
 Comment:
 This project were based the pytorch, pytorch lightning and pytorch video library, 
@@ -11,17 +11,11 @@ The project to predict Lung figure motion trajectory.
  
 Have a good code time!
 -----
-Last Modified: Monday November 20th 2023 4:49:26 am
-Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
+Last Modified: November 20th 2024 4:49:26 am
 -----
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
-
-10-01-2024	Kaixu Chen clean the code.
-2023-11-20 Chen change the tensorboard logger save path.
-
-This is Local version
 
 '''
 
