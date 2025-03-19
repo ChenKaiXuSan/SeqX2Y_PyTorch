@@ -51,7 +51,7 @@ A pretrained model as well as a set of 20 breathing traces and LUNA public CT da
 ` -->
 
 
-## Folde Tree 
+## Folder Tree 
 ``` bash
 .
 |-- configs
