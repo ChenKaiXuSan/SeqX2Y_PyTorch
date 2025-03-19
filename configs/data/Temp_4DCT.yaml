@@ -2,7 +2,7 @@
 data_path: "/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom1,/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom2,/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom3,/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom4,/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom5" 
 val_data_path: "/mnt/dataset/ouyang/dataset/468/POPI_seq3_468/4DCT-Dicom6" 
 num_workers: 0
-img_size: 128 # 128 # 224
+img_size: 128  # 224
 
 data_path2D: "/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-1,/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-2,/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-3,/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-4,/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-5" 
 val_data_path2D: "/mnt/dataset/ouyang/dataset/468/POPI_seq3_2D_468/2DCT-6" 
