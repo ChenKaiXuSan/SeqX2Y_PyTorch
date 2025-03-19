@@ -2,7 +2,7 @@
 File: train.py
 Project: project
 Created Date: 2023-08-11 08:48:00
-Author: chenkaixu
+Author: ouyang hao
 -----
 Comment:
 The train and val process for main file.
@@ -10,15 +10,15 @@ This file under the pytorch lightning and inherit the lightningmodule.
  
 Have a good code time!
 -----
-Last Modified: Wednesday April 24th 2024 10:20:22 am
+Last Modified: Wednesday December 24th 2024 10:20:22 am
 Modified By: the developer formerly known as Hao Ouyang at <ouyanghaomail@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
 
-10-01-2024	Kaixu Chen	add the 3D CNN to process the time series 3D image.
-2023-09-26	KX.C	change the train and val process, here we think need use the self.seq to control the seq_len, to reduce the memory usage.
+10-01-2024	Ouyang Hao	add the 3D CNN to process the time series 3D image.
+2023-09-26	Ouyang Hao	change the train and val process, here we think need use the self.seq to control the seq_len, to reduce the memory usage.
 
 '''
 
