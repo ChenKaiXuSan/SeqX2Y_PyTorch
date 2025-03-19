@@ -27,7 +27,7 @@ To address the issue in radiotherapy where respiratory motion can lead to misali
 1. git clone the project to your local machine.
 
 ``` bash
-git clone https://github.com/ChenKaiXuSan/SeqX2Y_PyTorch.git
+git clone https://github.com/ChenKaiXuSan/DEMT-LI.git
 ```
 
 2. make the run time environment, here we recommend you to use the docker to run the code, you can find the dockerfile in the docker folder.
@@ -35,7 +35,7 @@ git clone https://github.com/ChenKaiXuSan/SeqX2Y_PyTorch.git
 3. change the directory to the project folder.
 
 ``` bash
-cd  SeqX2Y_PyTorch/
+cd  DEMT-LI/
 ```
 
 4. run the code.
